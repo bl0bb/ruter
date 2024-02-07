@@ -1,6 +1,6 @@
 import './index.css';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Bus as BusIcon, Train as TrainIcon } from '../../../../svg';
 
@@ -63,8 +63,8 @@ function JourneyPlannerPlaceInput({ name, label, icons }) {
             <div className='journey_planner_form_place_input_container'>
                 <input type='text' name={name} placeholder='Place, address, area' className='journey_planner_form_place_input_input_field' />
                 <div className='journey_planner_form_place_input_icons'>
-                    {icons?.map((icon) => {
-                        return React.createElement(icon);
+                    {icons?.map((icon, index) => {
+                        return React.createElement(icon, { key: index });
                     })}
                 </div>
             </div>
@@ -72,10 +72,70 @@ function JourneyPlannerPlaceInput({ name, label, icons }) {
     )
 }
 
+const defaultQuery = `{
+    stopPlace(id: "NSR:StopPlace:4977") {
+        name
+        id
+        estimatedCalls(numberOfDepartures: 12, whiteListedModes: [bus]) {
+            expectedDepartureTime
+            aimedDepartureTime
+            destinationDisplay {
+                frontText
+            }
+            serviceJourney {
+                line {
+                    publicCode
+                    transportMode
+                }
+            }
+        }
+    }
+}`;
+
+function JournyPlannerForm() {
+    return (
+        <form id='journey_planner_planner_form'>
+            <h2 id='journey_planner_form_title'>
+                Where do you want to go?
+            </h2>
+            <div id='journey_planner_planner_form_place_inputs'>
+                <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} />
+                <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} />
+            </div>
+        </form>
+    );
+}
+
+function DeparturesForm() {
+    return (
+        <form id='journey_planner_planner_form'>
+            <h2 id='journey_planner_form_title'>
+                Where do you want to travel from?
+            </h2>
+        </form>
+    );
+}
+
 export default function Index() {
     const [departures, setDepartures] = useState();
+    const [curQuery, setCurQuery] = useState(defaultQuery);
+    const [selectedForm, setSelectedForm] = useState('journey_planner');
+    const fetchInterval = useRef();
 
-    useEffect(() => {
+    const forms = {
+        journey_planner: {
+            id: 'journey_planner',
+            name: 'Journey Planner',
+            form: JournyPlannerForm,
+        },
+        departures: {
+            id: 'departures',
+            name: 'Departures',
+            form: DeparturesForm,
+        },
+    }
+
+    const fetchNewDepartures = () => {
         fetch('https://api.entur.io/journey-planner/v3/graphql', {
             method: 'POST',
             headers: {
@@ -83,45 +143,52 @@ export default function Index() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                query: `{
-                    stopPlace(id: "NSR:StopPlace:4977") {
-                        name
-                        id
-                        estimatedCalls(numberOfDepartures: 12, whiteListedModes: [bus]) {
-                            expectedDepartureTime
-                            aimedDepartureTime
-                            destinationDisplay {
-                                frontText
-                            }
-                            serviceJourney {
-                                line {
-                                    publicCode
-                                    transportMode
-                                }
-                            }
-                        }
-                    }
-                }`,
+                query: curQuery,
             }),
         }).then((res) => {
             if (res.ok) {
                 res.json().then((data) => {
+                    if (data.data.stopPlace === null) {
+                        console.warn('Stop place null.');
+                        return;
+                    }
                     setDepartures(data);
                 });
             }
         });
+    }
+
+    useEffect(() => {
+        fetchInterval.current = setInterval(() => {
+            fetchNewDepartures();
+        }, 60 * 1000);
+        return () => {
+            if (fetchInterval.current) {
+                clearInterval(fetchInterval.current);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchNewDepartures();
     }, []);
 
     return (
         <div id='journey_planner'>
             <div id='journey_planner_planner'>
-                <div id='journey_planner_planner_form_container'>
-                    <form id='journey_planner_planner_form'>
-                        <div id='journey_planner_planner_form_place_inputs'>
-                            <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} />
-                            <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} />
-                        </div>
-                    </form>
+                <div id='journey_planner_planner_form_display'>
+                    <div id='journey_planner_planner_form_display_select'>
+                        {Object.values(forms).map((form, index) => {
+                            return (
+                                <div key={index} className={`journey_planner_form_display_select_button${selectedForm === form.id ? ' journey_planner_form_display_select_button_selected' : ''}`} onClick={() => setSelectedForm(form.id)}>
+                                    {form.name}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div id='journey_planner_planner_form_container'>
+                        {React.createElement(forms[selectedForm].form)}
+                    </div>
                 </div>
                 <div id='departures_container'>
                     <div id='departures'>

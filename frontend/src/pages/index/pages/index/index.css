@@ -17,6 +17,28 @@
 }
 
 
+#journey_planner_planner_form_display {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#journey_planner_planner_form_display_select {
+    display: flex;
+}
+
+.journey_planner_form_display_select_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.journey_planner_form_display_select_button.journey_planner_form_display_select_button_selected {
+    background-color: var(--main-light-col-1);
+}
+
+
 
 #journey_planner_planner_form_container {
     position: relative;
@@ -35,6 +57,9 @@
     box-sizing: border-box;
 }
 
+#journey_planner_form_title {
+    margin: 0 0 20px 0;
+}
 
 #journey_planner_planner_form_place_inputs {
     display: flex;
