@@ -1,0 +1,36 @@
+#navigation_container {
+
+}
+
+#departures {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+
+
+
+
+.departure {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+}
+
+.departure_simple_info {
+    
+}
+
+.departure_info {
+
+}
+
+.departure_time {
+
+}
+
+.departure_name {
+
+}
