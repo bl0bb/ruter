@@ -1,8 +1,42 @@
-#navigation_container {
-
+#journey_planner {
+    display: flex;
+    width: 100svw;
+    height: 100svh;
 }
 
-#departures {
+
+
+
+#journey_planner_planner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 500px;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+#journey_planner_planner_form_container {
+    position: relative;
+    display: flex;
+    width: 100%;
+    background-color: var(--main-light-col-1);
+    box-shadow: var(--main-box-shadow-1);
+    z-index: 1;
+}
+
+#journey_planner_planner_form {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+#journey_planner_planner_form_place_inputs {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -12,25 +46,130 @@
 
 
 
+
+.journey_planner_form_place_input {
+    display: flex;
+    align-items: center;
+}
+
+.journey_planner_form_place_input_label {
+    width: 60px;
+}
+
+.journey_planner_form_place_input_container {
+    --journey-planner-form-place-input-input-field-pad: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    border-radius: 8px;
+    border: 1px solid rgb(150, 150, 150);
+}
+
+.journey_planner_form_place_input_input_field {
+    all: unset;
+    width: 100%;
+    height: 100%;
+    padding: var(--journey-planner-form-place-input-input-field-pad);
+    box-sizing: border-box;
+}
+
+.journey_planner_form_place_input_icons {
+    position: absolute;
+    right: var(--journey-planner-form-place-input-input-field-pad);
+    display: flex;
+    gap: 8px;
+}
+
+
+
+
+
+
+
+#departures_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    overflow: hidden scroll;
+}
+
+
+#departures {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    padding: 20px 4px 20px 20px;
+    box-sizing: border-box;
+}
+
+
+
+
+
 .departure {
     display: flex;
-    gap: 16px;
-    padding: 16px;
-    border-radius: 16px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: var(--main-box-shadow-1);
+    background-color: var(--main-light-col-1);
 }
 
-.departure_simple_info {
-    
+.departure_top_info {
+    display: flex;
+    gap: 8px;
 }
 
-.departure_info {
-
+.departure_top_info_time {
+    font-weight: 600;
+    font-size: 20px;
 }
 
-.departure_time {
+.departure_top_info_expected_time {}
 
+.departure_top_info_aimed_time {
+    color: rgb(255, 166, 0);
 }
 
-.departure_name {
+.departure_content_info {}
 
+.departure_content_info_name {}
+
+
+
+
+
+.transport_id {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 6px;
+    background-color: var(--transport-id-col);
+}
+
+.transport_id_icon {
+    display: flex;
+}
+
+.transport_id_number {
+    font-weight: 600;
+}
+
+
+
+
+.transport_id_labeled {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.transport_id_labeled_label {
+    font-weight: 600;
+    font-size: 18px;
 }
