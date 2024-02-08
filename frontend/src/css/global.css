@@ -1,8 +1,16 @@
 :root {
     --main-bg-col: rgb(31, 37, 44);
 
-    --main-light-col-1: rgb(36, 43, 51);
-    
+    --main-bg-light-col-1: rgb(36, 43, 51);
+    --main-bg-light-col-2: rgb(42, 51, 60);
+    --main-bg-light-col-3: rgb(48, 58, 69);
+
+    --main-bg-dark-col-1: rgb(26, 31, 36);
+
+    --main-col: rgb(255, 255, 255);
+
+    --main-sub-col-1: rgb(200, 200, 200);
+
     --main-box-shadow-1: 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
 }
 
@@ -11,12 +19,17 @@
 
 * {
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-    color: rgb(255, 255, 255);
+    color: var(--main-col);
 }
 
 
 body {
     margin: 0;
+}
+
+button {
+    all: unset;
+    cursor: pointer;
 }
 
 
@@ -64,6 +77,4 @@ body {
 
 
 
-#main {
-
-}
+#main {}

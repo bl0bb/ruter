@@ -24,6 +24,8 @@
 }
 
 #journey_planner_planner_form_display_select {
+    position: relative;
+    z-index: 2;
     display: flex;
 }
 
@@ -35,7 +37,7 @@
 }
 
 .journey_planner_form_display_select_button.journey_planner_form_display_select_button_selected {
-    background-color: var(--main-light-col-1);
+    background-color: var(--main-bg-light-col-1);
 }
 
 
@@ -44,7 +46,7 @@
     position: relative;
     display: flex;
     width: 100%;
-    background-color: var(--main-light-col-1);
+    background-color: var(--main-bg-light-col-1);
     box-shadow: var(--main-box-shadow-1);
     z-index: 1;
 }
@@ -82,13 +84,30 @@
 }
 
 .journey_planner_form_place_input_container {
+    --journey-planner-form-place-input-border: 1px solid rgb(150, 150, 150);
     --journey-planner-form-place-input-input-field-pad: 12px;
     position: relative;
     display: flex;
     align-items: center;
     flex-grow: 1;
+}
+
+.journey_planner_form_place_input_main {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    border: var(--journey-planner-form-place-input-border);
+    background-color: var(--main-bg-dark-col-1);
+    overflow: hidden;
+}
+
+.journey_planner_form_place_input_main:not(.journey_planner_form_place_input_main_focused) {
     border-radius: 8px;
-    border: 1px solid rgb(150, 150, 150);
+}
+
+.journey_planner_form_place_input_main.journey_planner_form_place_input_main_focused {
+    border-radius: 8px 8px 0 0;
 }
 
 .journey_planner_form_place_input_input_field {
@@ -108,11 +127,76 @@
 
 
 
+.journey_planner_form_place_input_suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+    width: 100%;
+    z-index: 1;
+    background-color: var(--main-bg-light-col-1);
+    border-left: var(--journey-planner-form-place-input-border);
+    border-right: var(--journey-planner-form-place-input-border);
+    border-bottom: var(--journey-planner-form-place-input-border);
+    border-radius: 0 0 8px 8px;
+    box-sizing: border-box;
+    overflow: hidden auto;
+}
+
+.journey_planner_form_place_input_suggestions:not(.journey_planner_form_place_input_suggestions_focused) {
+    display: none;
+}
 
 
 
 
-#departures_container {
+
+.journey_planner_form_place_input_suggestion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+}
+
+.journey_planner_form_place_input_suggestion:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.journey_planner_form_place_input_suggestion:hover {
+    background-color: var(--main-bg-light-col-2);
+}
+
+.journey_planner_form_place_input_suggestion:active {
+    background-color: var(--main-bg-light-col-3);
+}
+
+.journey_planner_form_place_input_suggestion_info {
+    display: flex;
+    flex-direction: column;
+}
+
+.journey_planner_form_place_input_suggestion_icons {
+    display: flex;
+    gap: 4px;
+}
+
+.journey_planner_form_place_input_suggestion_name {
+
+}
+
+.journey_planner_form_place_input_suggestion_location {
+    color: var(--main-sub-col-1);
+}
+
+
+
+
+
+
+
+#journey_planner_results_container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -121,7 +205,7 @@
 }
 
 
-#departures {
+#journey_planner_results {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -134,35 +218,35 @@
 
 
 
-.departure {
+.journey_planner_result {
     display: flex;
     flex-direction: column;
     gap: 12px;
     padding: 12px;
     border-radius: 12px;
     box-shadow: var(--main-box-shadow-1);
-    background-color: var(--main-light-col-1);
+    background-color: var(--main-bg-light-col-1);
 }
 
-.departure_top_info {
+.journey_planner_result_top_info {
     display: flex;
     gap: 8px;
 }
 
-.departure_top_info_time {
+.journey_planner_result_top_info_time {
     font-weight: 600;
     font-size: 20px;
 }
 
-.departure_top_info_expected_time {}
+.journey_planner_result_top_info_expected_time {}
 
-.departure_top_info_aimed_time {
+.journey_planner_result_top_info_aimed_time {
     color: rgb(255, 166, 0);
 }
 
-.departure_content_info {}
+.journey_planner_result_content_info {}
 
-.departure_content_info_name {}
+.journey_planner_result_content_info_name {}
 
 
 
@@ -182,6 +266,7 @@
 }
 
 .transport_id_number {
+    line-height: 16px;
     font-weight: 600;
 }
 
