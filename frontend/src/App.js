@@ -7,6 +7,7 @@ import MainWindow from './main_window/index';
 
 import IndexLayout from './pages/index/layout/index';
 import Index from './pages/index/pages/index/index';
+import JourneyPlanner from './pages/index/pages/journey_planner/index';
 
 function App() {
     return (
@@ -15,6 +16,7 @@ function App() {
                 <Route path='/' element={<MainWindow />}>
                     <Route path='/' element={<IndexLayout />}>
                         <Route index element={<Index />} />
+                        <Route path='journeyplanner' element={<JourneyPlanner />} />
                     </Route>
                 </Route>
             </Routes>

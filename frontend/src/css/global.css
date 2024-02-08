@@ -17,7 +17,7 @@
 
 
 
-* {
+*:not(svg, path, defs, mask, circle, rect, g, text, tspan) {
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     color: var(--main-col);
 }
@@ -72,9 +72,41 @@ button {
 #main_window {
     background-color: var(--main-bg-col);
     min-height: 100svh;
+    overflow: auto;
 }
 
 
 
 
 #main {}
+
+
+
+
+
+
+
+
+
+
+
+
+.fancy_link {
+    color: rgb(0, 147, 255);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.fancy_link:hover {
+    text-decoration: underline;
+}
+
+
+
+
+.fancy_link_icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    color: rgb(0, 147, 255);
+}

@@ -47,6 +47,30 @@ export function Subway({ ...props }) {
     );
 }
 
+export function Walk({ ...props }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 20" width="22" height="22" fill="currentColor" {...props}>
+            <path d="M6.72 2.712A1.67 1.67 0 008.4 4.373c.927 0 1.68-.744 1.68-1.661 0-.919-.753-1.664-1.68-1.664-.928 0-1.68.745-1.68 1.664zm-.567 1.684l-3.696.932a.762.762 0 00-.518.44L.503 9.16a.752.752 0 00.416.986.777.777 0 001.006-.408l1.287-3.045 1.494-.376L3.448 9.54a1.659 1.659 0 00-.113.285l-.03.096a1.666 1.666 0 00.338 1.559l-1.391 2.789c-.528 1.062-1.059 2.125-1.46 2.927l-.487.973-.139.275-.03.058a.123.123 0 01-.008.014l-.002.006a1.025 1.025 0 00.342 1.351c.181.119.387.175.589.175.34 0 .674-.161.878-.459v-.001c.07-.107.05-.081.063-.105.13-.243 1.923-3.837 3.142-6.286l2.802 6.188c.175.386.561.616.967.616.143 0 .288-.028.428-.09.533-.231.774-.843.537-1.367l-3.355-7.411c.022-.044.046-.087.064-.132L7.74 8.038l.442 1.237a.766.766 0 00.411.438l2.322 1.023a.77.77 0 001.018-.378.748.748 0 00-.387-.996L9.524 8.47 8.441 5.447a.756.756 0 00-.424-.445l-.703-.292c-.036-.017-.069-.038-.107-.054-.019-.006-.038-.008-.056-.014l-.506-.21a.818.818 0 00-.492-.036z" transform="translate(0 -1)" fillRule="evenodd"></path>
+        </svg>
+    );
+}
+
+export function ArrowRight({ ...props }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 10" width="7" height="10" fill="currentColor" {...props}>
+            <path d="M0 1.154L1.154 0l5 5-5 5L0 8.846 3.846 5z" fill="currentColor" fillRule="nonzero"></path>
+        </svg>
+    );
+}
+
+export function LinkArrowRight({ ...props }) {
+    return (
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='none' {...props}>
+            <path d='M 16.4 7 L 21.5 12 L 16.4 17 M 2.5 12 L 19.2 12' strokeLinecap='round' strokeLinejoin='round' stroke='currentColor' strokeWidth='2' />
+        </svg>
+    );
+}
+
 export function Template({ ...props }) {
     return (
         <div {...props}>
