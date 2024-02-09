@@ -595,7 +595,6 @@ function generatePlansQuery(from, to) {
 
 function JourneyPlannerForm() {
     const { formData, setFormsData } = useContext(journeyPlannerContext);
-    console.log(formData, setFormsData)
 
     return (
         <form id='journey_planner_planner_form'>
@@ -603,34 +602,39 @@ function JourneyPlannerForm() {
                 Where do you want to go?
             </h2>
             <div id='journey_planner_planner_form_place_inputs'>
-                <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => {
-                    console.log(value)
-                    formData.setPlanData({
-                        ...formData.planData,
+                <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => formData.setPlanData((prev) => {
+                    return {
+                        ...prev,
                         from: {
-                            ...formData.planData.from,
+                            ...prev.from,
                             input: value
                         }
-                    })
-                }} setLocation={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    from: {
-                        ...formData.planData.from,
-                        location: value
-                    }
+                    };
+                })} setLocation={(value) => formData.setPlanData((prev) => {
+                    return {
+                        ...prev,
+                        from: {
+                            ...prev.from,
+                            location: value
+                        }
+                    };
                 })} />
-                <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.to.input} setSearchInput={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    to: {
-                        ...formData.planData.to,
-                        input: value
-                    }
-                })} setLocation={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    to: {
-                        ...formData.planData.to,
-                        location: value
-                    }
+                <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.to.input} setSearchInput={(value) => formData.setPlanData((prev) => {
+                    return {
+                        ...prev,
+                        to: {
+                            ...prev.to,
+                            input: value
+                        }
+                    };
+                })} setLocation={(value) => formData.setPlanData((prev) => {
+                    return {
+                        ...prev,
+                        to: {
+                            ...prev.to,
+                            location: value
+                        }
+                    };
                 })} />
             </div>
         </form>
@@ -645,18 +649,22 @@ function DeparturesForm() {
             <h2 id='journey_planner_form_title'>
                 Where do you want to travel from?
             </h2>
-            <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => formData.setPlanData({
-                ...formData.planData,
-                from: {
-                    ...formData.planData.from,
-                    input: value
-                }
-            })} setLocation={(value) => formData.setPlanData({
-                ...formData.planData,
-                from: {
-                    ...formData.planData.from,
-                    location: value
-                }
+            <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => formData.setPlanData((prev) => {
+                return {
+                    ...prev,
+                    from: {
+                        ...prev.from,
+                        input: value
+                    }
+                };
+            })} setLocation={(value) => formData.setPlanData((prev) => {
+                return {
+                    ...prev,
+                    from: {
+                        ...prev.from,
+                        location: value
+                    }
+                };
             })} />
         </form>
     );
@@ -665,10 +673,12 @@ function DeparturesForm() {
 function JourneyPlanner({ selectedForm, setSelectedForm, forms, formsData }) {
     const curForm = forms[selectedForm];
     const curFormData = formsData[selectedForm];
+
     return (
         <journeyPlannerContext.Provider value={{
             form: curForm.form,
             formData: curFormData,
+            formsData: formsData,
         }}>
             <div id='journey_planner_planner_form_display'>
                 <div id='journey_planner_planner_form_display_select'>
@@ -793,6 +803,16 @@ function JourneyResults({ results }) {
     });
 }
 
+function JourneyPlannerResults({ selectedForm, forms, formsData }) {
+    console.log(forms, formsData, selectedForm)
+    const results = formsData[selectedForm].plans;
+    return (
+        <>
+            {React.createElement(forms[selectedForm].results, { results })}
+        </>
+    );
+}
+
 export default function Index() {
     const [selectedForm, setSelectedForm] = useState('journey_planner');
 
@@ -802,11 +822,13 @@ export default function Index() {
             id: 'journey_planner',
             name: 'Journey Planner',
             form: JourneyPlannerForm,
+            results: JourneyResults,
         },
         departures: {
             id: 'departures',
             name: 'Departures',
             form: DeparturesForm,
+            results: DeparturesResults,
         },
     };
 
@@ -834,7 +856,7 @@ export default function Index() {
         const url = new URL(window.location.href);
         const searchParams = new URLSearchParams();
         for (const [key, value] of Object.entries(data)) {
-            searchParams.append(key, value.location?.id);
+            searchParams.append(key, value.location?.properties.id);
         }
         url.search = searchParams;
         window.history.replaceState(null, null, url.toString());
@@ -949,7 +971,7 @@ export default function Index() {
     }
 
     const generatePlansQueryFromData = (planData) => {
-        return generatePlansQuery(planData.from.location.id, planData.to.location.id);
+        return generatePlansQuery(planData.from.location, planData.to.location);
     }
 
     const plansFormData = usePlannerFormData({
@@ -986,7 +1008,7 @@ export default function Index() {
     }
 
     const generateDeparturesQueryFromData = (planData) => {
-        return generateDeparturesQuery(planData.from.location.id);
+        return generateDeparturesQuery(planData.from.location);
     }
 
     const departuresFormData = usePlannerFormData({
@@ -1014,7 +1036,7 @@ export default function Index() {
                 <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} formsData={formsData} />
                 <div id='journey_planner_results_container'>
                     <div id='journey_planner_results'>
-                        {selectedForm === 'journey_planner' ? "womp" : selectedForm === 'departures' ? "womp" : undefined}
+                        <JourneyPlannerResults selectedForm={selectedForm} forms={forms} formsData={formsData} />
                     </div>
                 </div>
             </div>
