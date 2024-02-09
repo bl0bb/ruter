@@ -313,14 +313,14 @@ function generateDeparturesQuery(stopPlace) {
 }
 
 /*
-//place this in "from" or "to" in generatePlansQuery instead of "place"
+//place this in "from" or "to" in generatePlanQuery instead of "place"
 coordinates: {
     latitude: 59.96050414081307
     longitude: 11.040338686322317
 }
 */
 
-function generatePlansQuery(from, to) {
+function generatePlanQuery(from, to) {
     return {
         operationName: 'trips',
         query: `query trips($from: Location!, $to: Location!, $dateTime: DateTime!, $arriveBy: Boolean!, $preferred: InputPreferred, $modes: [Mode], $minimumTransferTime: Int, $banned: InputBanned, $whiteListed: InputWhiteListed, $transportSubmodes: [TransportSubmodeFilter], $numTripPatterns: Int = 8, $walkSpeed: Float = 1.3, $walkReluctance: Float = 4.0) {
@@ -594,209 +594,33 @@ function generatePlansQuery(from, to) {
 }
 
 function JourneyPlannerForm() {
-    const { formData, setFormsData } = useContext(journeyPlannerContext);
-    console.log(formData, setFormsData)
-
+    const { planFromSearchInput, setPlanFromSearchInput, planToSearchInput, setPlanToSearchInput, setPlanToLocation, setPlanFromLocation } = useContext(journeyPlannerContext);
     return (
         <form id='journey_planner_planner_form'>
             <h2 id='journey_planner_form_title'>
                 Where do you want to go?
             </h2>
             <div id='journey_planner_planner_form_place_inputs'>
-                <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => {
-                    console.log(value)
-                    formData.setPlanData({
-                        ...formData.planData,
-                        from: {
-                            ...formData.planData.from,
-                            input: value
-                        }
-                    })
-                }} setLocation={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    from: {
-                        ...formData.planData.from,
-                        location: value
-                    }
-                })} />
-                <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.to.input} setSearchInput={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    to: {
-                        ...formData.planData.to,
-                        input: value
-                    }
-                })} setLocation={(value) => formData.setPlanData({
-                    ...formData.planData,
-                    to: {
-                        ...formData.planData.to,
-                        location: value
-                    }
-                })} />
+                <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={planFromSearchInput} setSearchInput={setPlanFromSearchInput} setLocation={setPlanFromLocation} />
+                <JourneyPlannerPlaceInput name='to' label='To' icons={[BusIcon, TrainIcon]} searchInput={planToSearchInput} setSearchInput={setPlanToSearchInput} setLocation={setPlanToLocation} />
             </div>
         </form>
     );
 }
 
 function DeparturesForm() {
-    const { formData } = useContext(journeyPlannerContext);
-
+    const { departuresFromInput, setDeparturesFromInput, departuresLocation, setDeparturesLocation } = useContext(journeyPlannerContext);
     return (
         <form id='journey_planner_planner_form'>
             <h2 id='journey_planner_form_title'>
                 Where do you want to travel from?
             </h2>
-            <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => formData.setPlanData({
-                ...formData.planData,
-                from: {
-                    ...formData.planData.from,
-                    input: value
-                }
-            })} setLocation={(value) => formData.setPlanData({
-                ...formData.planData,
-                from: {
-                    ...formData.planData.from,
-                    location: value
-                }
-            })} />
+            <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={departuresFromInput} setSearchInput={setDeparturesFromInput} setLocation={setDeparturesLocation} />
         </form>
     );
 }
 
-function JourneyPlanner({ selectedForm, setSelectedForm, forms, formsData }) {
-    const curForm = forms[selectedForm];
-    const curFormData = formsData[selectedForm];
-    return (
-        <journeyPlannerContext.Provider value={{
-            form: curForm.form,
-            formData: curFormData,
-        }}>
-            <div id='journey_planner_planner_form_display'>
-                <div id='journey_planner_planner_form_display_select'>
-                    {Object.values(forms).map((form, index) => {
-                        return (
-                            <div key={index} className={`journey_planner_form_display_select_button${selectedForm === form.id ? ' journey_planner_form_display_select_button_selected' : ''}`} onClick={() => setSelectedForm(form.id)}>
-                                {form.name}
-                            </div>
-                        );
-                    })}
-                </div>
-                <div id='journey_planner_planner_form_container'>
-                    {React.createElement(curForm.form)}
-                </div>
-            </div>
-        </journeyPlannerContext.Provider>
-    );
-}
-
-function usePlannerFormData(inputs, updateUrl, fetchResults, generateQuery) {
-    //plans
-    const [curPlanQuery, setCurPlanQuery] = useState();
-    const [plans, setPlans] = useState();
-    const [prevSelectedPlan, setPrevSelectedPlan] = useState();
-
-    const [planData, setPlanData] = useState(inputs);
-
-    const fetchNewPlans = () => {
-        fetchResults(setPlans, JSON.stringify(curPlanQuery));
-    }
-
-    useEffect(() => {
-        if (Object.values(planData).findIndex((plan) => plan.location === undefined) !== -1) {
-            return;
-        }
-        setCurPlanQuery(generateQuery(planData));
-        updateUrl(planData);
-    }, [planData]);
-
-    useEffect(() => {
-        if (curPlanQuery === undefined) {
-            return;
-        }
-        fetchNewPlans();
-    }, [curPlanQuery]);
-
-    return {
-        planData,
-        setPlanData,
-        curPlanQuery,
-        setCurPlanQuery,
-        plans,
-        setPlans,
-        prevSelectedPlan,
-        setPrevSelectedPlan,
-    };
-}
-
-function DeparturesResults({ results }) {
-    console.log(results)
-    return results?.data.stopPlace.estimatedCalls.map((departure, index) => {
-        const expectedDepartureTime = new Date(departure.expectedDepartureTime);
-        const aimedDepartureTime = new Date(departure.aimedDepartureTime);
-        return (
-            <div key={index} className='journey_planner_result'>
-                <div className='journey_planner_result_top_info'>
-                    <div className='journey_planner_result_top_info_expected_time departure_top_info_time'>
-                        {getHourMinDate(expectedDepartureTime)}
-                    </div>
-                    {expectedDepartureTime.valueOf() !== aimedDepartureTime.valueOf() ? (
-                        <div className='journey_planner_result_top_info_aimed_time departure_top_info_time'>
-                            {getHourMinDate(aimedDepartureTime)}
-                        </div>
-                    ) : undefined}
-                </div>
-                <div className='journey_planner_result_content_info'>
-                    <TransportIdLabeled transportType={departure.serviceJourney.line.transportMode} transportNumber={departure.serviceJourney.line.publicCode} label={departure.destinationDisplay.frontText} />
-                </div>
-            </div>
-        );
-    });
-}
-
-function JourneyResults({ results }) {
-    console.log(results)
-    return results?.data.trip.tripPatterns.map((journey, index) => {
-        const startTime = new Date(journey.startTime);
-        const endTime = new Date(journey.endTime);
-        return (
-            <div key={index} className='journey_planner_result'>
-                <div className='journey_planner_result_top_info'>
-                    <div className='journey_planner_result_top_info_expected_time journey_planner_result_top_info_time'>
-                        {getHourMinDate(startTime)} - {getHourMinDate(endTime)}
-                    </div>
-                    <div className='journey_planner_result_top_info_expected_duration'>
-                        {getReadableHourMinDate(new Date(endTime - startTime))}
-                    </div>
-                </div>
-                <div className='journey_planner_result_content_info'>
-                    {journey.legs.map((segment, index) => {
-                        const mode = segment.mode;
-                        return (
-                            <Fragment key={index}>
-                                <div className='journey_planner_result_content_info_segment'>
-                                    {mode === 'foot' ? (
-                                        <WalkTransportId distance={segment.distance} />
-                                    ) : (
-                                        <TransportIdLabeled transportColor={`#${segment.serviceJourney.line.presentation.colour}`} transportType={segment.serviceJourney.line.transportMode} transportNumber={segment.serviceJourney.line.publicCode} label={segment.fromEstimatedCall.destinationDisplay.frontText} />
-                                    )}
-                                </div>
-                                {index < journey.legs.length - 1 ? (
-                                    <div className='journey_planner_result_content_info_arrow'>
-                                        <ArrowRightIcon />
-                                    </div>
-                                ) : undefined}
-                            </Fragment>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    });
-}
-
-export default function Index() {
-    const [selectedForm, setSelectedForm] = useState('journey_planner');
-
-
+function JourneyPlanner({ selectedForm, setSelectedForm, planFromSearchInput, setPlanFromSearchInput, planToSearchInput, setPlanToSearchInput, planToLocation, setPlanToLocation, planFromLocation, setPlanFromLocation, departuresFromInput, setDeparturesFromInput, departuresLocation, setDeparturesLocation }) {
     const forms = {
         journey_planner: {
             id: 'journey_planner',
@@ -810,12 +634,97 @@ export default function Index() {
         },
     };
 
+    return (
+        <journeyPlannerContext.Provider value={{ planFromSearchInput, setPlanFromSearchInput, planToSearchInput, setPlanToSearchInput, planToLocation, setPlanToLocation, planFromLocation, setPlanFromLocation, departuresFromInput, setDeparturesFromInput, departuresLocation, setDeparturesLocation }}>
+            <div id='journey_planner_planner_form_display'>
+                <div id='journey_planner_planner_form_display_select'>
+                    {Object.values(forms).map((form, index) => {
+                        return (
+                            <div key={index} className={`journey_planner_form_display_select_button${selectedForm === form.id ? ' journey_planner_form_display_select_button_selected' : ''}`} onClick={() => setSelectedForm(form.id)}>
+                                {form.name}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div id='journey_planner_planner_form_container'>
+                    {React.createElement(forms[selectedForm].form)}
+                </div>
+            </div>
+        </journeyPlannerContext.Provider>
+    );
+}
+
+export default function Index() {
+    //plans
+    const [curPlanQuery, setCurPlanQuery] = useState();
+    const [plans, setPlans] = useState();
+    const [prevSelectedPlan, setPrevSelectedPlan] = useState();
+
+    const [planFromSearchInput, setPlanFromSearchInput] = useState('');
+    const [planToSearchInput, setPlanToSearchInput] = useState('');
+    const [planFromLocation, setPlanFromLocation] = useState();
+    const [planToLocation, setPlanToLocation] = useState();
+
+    //departures
+    const [curDeparturesQuery, setCurDeparturesQuery] = useState();
+    const [departures, setDepartures] = useState();
+    const [prevSelectedDeparture, setPrevSelectedDeparture] = useState();
+
+    const [departuresFromInput, setDeparturesFromInput] = useState('');
+    const [departuresLocation, setDeparturesLocation] = useState();
+
+
+
+    const [selectedForm, setSelectedForm] = useState('journey_planner');
+
 
 
     const fetchInterval = useRef();
 
     const mapRef = useRef();
 
+    const fetchNewDepartures = () => {
+        fetch('https://api.entur.io/journey-planner/v3/graphql', {
+            method: 'POST',
+            headers: {
+                'ET-Client-Name': 'joe_biden',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(curDeparturesQuery),
+        }).then((res) => {
+            if (res.ok) {
+                res.json().then((data) => {
+                    if (data.errors) {
+                        console.warn('Departures error.');
+                        return;
+                    }
+                    setDepartures(data);
+                });
+            }
+        });
+    }
+
+    //TODO: use V3 instead of V2
+    const fetchNewPlans = () => {
+        fetch('https://api.entur.io/journey-planner/v2/graphql', {
+            method: 'POST',
+            headers: {
+                'ET-Client-Name': 'joe_biden',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(curPlanQuery),
+        }).then((res) => {
+            if (res.ok) {
+                res.json().then((data) => {
+                    if (data.errors) {
+                        console.warn('Trip error.');
+                        return;
+                    }
+                    setPlans(data);
+                });
+            }
+        });
+    }
 
     /*
     useEffect(() => {
@@ -830,17 +739,45 @@ export default function Index() {
     }, []);
     */
 
-    const updateUrl = (data) => {
+    const updateUrl = () => {
         const url = new URL(window.location.href);
         const searchParams = new URLSearchParams();
-        for (const [key, value] of Object.entries(data)) {
-            searchParams.append(key, value.location?.id);
-        }
+        searchParams.append('from', planFromLocation.properties.id);
+        searchParams.append('to', planToLocation.properties.id);
         url.search = searchParams;
         window.history.replaceState(null, null, url.toString());
     }
 
-    /*
+    useEffect(() => {
+        if (departuresLocation === undefined) {
+            return;
+        }
+        setCurDeparturesQuery(generateDeparturesQuery(departuresLocation));
+        updateUrl();
+    }, [departuresLocation]);
+
+    useEffect(() => {
+        if (planToLocation === undefined || planFromLocation === undefined) {
+            return;
+        }
+        setCurPlanQuery(generatePlanQuery(planFromLocation, planToLocation));
+        updateUrl();
+    }, [planToLocation, planFromLocation]);
+
+    useEffect(() => {
+        if (curDeparturesQuery === undefined) {
+            return;
+        }
+        fetchNewDepartures();
+    }, [curDeparturesQuery]);
+
+    useEffect(() => {
+        if (curPlanQuery === undefined) {
+            return;
+        }
+        fetchNewPlans();
+    }, [curPlanQuery]);
+
     useEffect(() => {
         if (mapRef.current === undefined) {
             return;
@@ -898,7 +835,6 @@ export default function Index() {
 
         mapRef.current.fitBounds([startPoint, endPoint]);
     }, [plans, departures, mapRef]);
-    */
 
     useEffect(() => {
         // Initialize Leaflet map
@@ -912,109 +848,83 @@ export default function Index() {
         }
     }, []);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //TODO: use V3 instead of V2
-    const fetchNewPlans = (setPlans, body) => {
-        fetch('https://api.entur.io/journey-planner/v2/graphql', {
-            method: 'POST',
-            headers: {
-                'ET-Client-Name': 'joe_biden',
-                'Content-Type': 'application/json',
-            },
-            body: body,
-        }).then((res) => {
-            if (res.ok) {
-                res.json().then((data) => {
-                    if (data.errors) {
-                        console.warn('Trip error.');
-                        return;
-                    }
-                    setPlans(data);
-                });
-            }
-        });
-    }
-
-    const generatePlansQueryFromData = (planData) => {
-        return generatePlansQuery(planData.from.location.id, planData.to.location.id);
-    }
-
-    const plansFormData = usePlannerFormData({
-        from: {
-            input: '',
-        },
-        to: {
-            input: '',
-        },
-    }, updateUrl, fetchNewPlans, generatePlansQueryFromData);
-
-
-
-
-    const fetchNewDepartures = (setPlans, body) => {
-        fetch('https://api.entur.io/journey-planner/v3/graphql', {
-            method: 'POST',
-            headers: {
-                'ET-Client-Name': 'joe_biden',
-                'Content-Type': 'application/json',
-            },
-            body: body,
-        }).then((res) => {
-            if (res.ok) {
-                res.json().then((data) => {
-                    if (data.errors) {
-                        console.warn('Departures error.');
-                        return;
-                    }
-                    setPlans(data);
-                });
-            }
-        });
-    }
-
-    const generateDeparturesQueryFromData = (planData) => {
-        return generateDeparturesQuery(planData.from.location.id);
-    }
-
-    const departuresFormData = usePlannerFormData({
-        from: {
-            input: '',
-        },
-    }, updateUrl, fetchNewDepartures, generateDeparturesQueryFromData);
-
-
-
-
-
-
-
-
-    const formsData = {
-        journey_planner: plansFormData,
-        departures: departuresFormData,
-    };
-
-
     return (
         <div id='journey_planner'>
             <div id='journey_planner_planner'>
-                <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} formsData={formsData} />
+                <JourneyPlanner
+                    planFromSearchInput={planFromSearchInput}
+                    setPlanFromSearchInput={setPlanFromSearchInput}
+                    planToSearchInput={planToSearchInput}
+                    setPlanToSearchInput={setPlanToSearchInput}
+                    planFromLocation={planFromLocation}
+                    setPlanFromLocation={setPlanFromLocation}
+                    planToLocation={planToLocation}
+                    setPlanToLocation={setPlanToLocation}
+                    departuresFromInput={departuresFromInput}
+                    setDeparturesFromInput={setDeparturesFromInput}
+                    departuresLocation={departuresLocation}
+                    setDeparturesLocation={setDeparturesLocation}
+                    selectedForm={selectedForm}
+                    setSelectedForm={setSelectedForm} />
                 <div id='journey_planner_results_container'>
                     <div id='journey_planner_results'>
-                        {selectedForm === 'journey_planner' ? "womp" : selectedForm === 'departures' ? "womp" : undefined}
+                        {selectedForm === 'journey_planner' ? plans?.data.trip.tripPatterns.map((journey, index) => {
+                            const startTime = new Date(journey.startTime);
+                            const endTime = new Date(journey.endTime);
+                            return (
+                                <div key={index} className='journey_planner_result'>
+                                    <div className='journey_planner_result_top_info'>
+                                        <div className='journey_planner_result_top_info_expected_time journey_planner_result_top_info_time'>
+                                            {getHourMinDate(startTime)} - {getHourMinDate(endTime)}
+                                        </div>
+                                        <div className='journey_planner_result_top_info_expected_duration'>
+                                            {getReadableHourMinDate(new Date(endTime - startTime))}
+                                        </div>
+                                    </div>
+                                    <div className='journey_planner_result_content_info'>
+                                        {journey.legs.map((segment, index) => {
+                                            const mode = segment.mode;
+                                            return (
+                                                <Fragment key={index}>
+                                                    <div className='journey_planner_result_content_info_segment'>
+                                                        {mode === 'foot' ? (
+                                                            <WalkTransportId distance={segment.distance} />
+                                                        ) : (
+                                                            <TransportIdLabeled transportColor={`#${segment.serviceJourney.line.presentation.colour}`} transportType={segment.serviceJourney.line.transportMode} transportNumber={segment.serviceJourney.line.publicCode} label={segment.fromEstimatedCall.destinationDisplay.frontText} />
+                                                        )}
+                                                    </div>
+                                                    {index < journey.legs.length - 1 ? (
+                                                        <div className='journey_planner_result_content_info_arrow'>
+                                                            <ArrowRightIcon />
+                                                        </div>
+                                                    ) : undefined}
+                                                </Fragment>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        }) : selectedForm === 'departures' ? departures?.data.stopPlace.estimatedCalls.map((departure, index) => {
+                            const expectedDepartureTime = new Date(departure.expectedDepartureTime);
+                            const aimedDepartureTime = new Date(departure.aimedDepartureTime);
+                            return (
+                                <div key={index} className='journey_planner_result'>
+                                    <div className='journey_planner_result_top_info'>
+                                        <div className='journey_planner_result_top_info_expected_time departure_top_info_time'>
+                                            {getHourMinDate(expectedDepartureTime)}
+                                        </div>
+                                        {expectedDepartureTime.valueOf() !== aimedDepartureTime.valueOf() ? (
+                                            <div className='journey_planner_result_top_info_aimed_time departure_top_info_time'>
+                                                {getHourMinDate(aimedDepartureTime)}
+                                            </div>
+                                        ) : undefined}
+                                    </div>
+                                    <div className='journey_planner_result_content_info'>
+                                        <TransportIdLabeled transportType={departure.serviceJourney.line.transportMode} transportNumber={departure.serviceJourney.line.publicCode} label={departure.destinationDisplay.frontText} />
+                                    </div>
+                                </div>
+                            );
+                        }) : undefined}
                     </div>
                 </div>
             </div>
