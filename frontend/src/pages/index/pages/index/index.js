@@ -15,7 +15,7 @@ export default function Index() {
                     Not Ruter. 100% original not stolen website / consept / idea. Ruter is a copy of Buter.
                 </p>
                 <p>
-                    &#169;2026 Buter Corporation.
+                    &copy;2026 Buter Corporation.
                 </p>
             </span>
             <Link className='fancy_link' to='/journeyplanner'>
