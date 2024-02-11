@@ -938,15 +938,12 @@ function generatePlansQuery(from, to) {
     };
 }
 
-function usePlannerFormData(inputs, fetchResults, generateQuery) {
+function usePlannerFormData(planData, setPlanData, fetchResults, generateQuery) {
     const { updateUrl, isURLLoaded } = useContext(journeyPlannerContext);
 
     const [curPlanQuery, setCurPlanQuery] = useState();
     const [plans, setPlans] = useState();
     const [selectedPlan, setSelectedPlan] = useState(0);
-    const [mapData, setMapData] = useState();
-
-    const [planData, setPlanData] = useState(inputs);
 
     const fetchNewPlans = () => {
         fetchResults(setPlans, JSON.stringify(curPlanQuery));
@@ -979,8 +976,6 @@ function usePlannerFormData(inputs, fetchResults, generateQuery) {
         setPlans,
         selectedPlan,
         setSelectedPlan,
-        mapData,
-        setMapData,
     };
 }
 
@@ -992,7 +987,7 @@ function usePlannerFormData(inputs, fetchResults, generateQuery) {
 
 //journey
 function PlansContainer({ children }) {
-    const { selectedForm, setResults, setIsURLLoaded } = useContext(journeyPlannerContext);
+    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs } = useContext(journeyPlannerContext);
 
     //TODO: use V3 instead of V2
     const fetchNewPlans = (setPlans, body) => {
@@ -1026,13 +1021,13 @@ function PlansContainer({ children }) {
         return generatePlansQuery(planData.from.location, planData.to.location);
     }
 
-    const plansFormData = usePlannerFormData({
-        from: {
-            input: '',
-        },
-        to: {
-            input: '',
-        },
+    const plansFormData = usePlannerFormData(inputs[selectedForm], (value) => {
+        setInputs((prev) => {
+            return {
+                ...prev,
+                [selectedForm]: typeof (value) === 'function' ? value(prev[selectedForm]) : value,
+            };
+        });
     }, fetchNewPlans, generatePlansQueryFromData);
 
     useEffect(() => {
@@ -1210,104 +1205,103 @@ function JourneyResults({ results }) {
 }
 
 function JourneyPlannerMap() {
-    const { setMapCenter } = useContext(journeyPlannerContext);
     const { formData } = useContext(formDataContext);
+
+    const [mapData, setMapData] = useState({
+        polylines: [],
+        markers: [],
+    });
 
     const map = useMap();
 
-    const newMapData = {
-        polylines: [],
-        markers: [],
-    };
-
-    const points = [];
-
-    let startPoint;
-    let endPoint;
-
-    if (formData.plans?.data !== undefined) {
-        const trip = formData.plans.data.trip.tripPatterns[formData.selectedPlan];
-        trip.legs.forEach(leg => {
-            const mode = leg.mode;
-            const curPoints = leg.pointsOnLink.points;
-            const coordinates = polyline.decode(curPoints).map(coord => [coord[0], coord[1]]);
-
-            const borderPolyConfig = {
-                color: '#ffffff',
-                opacity: 1,
-                weight: 8,
-            };
-
-            const fillPolyConfig = {
-                color: mode === 'foot' ? transportPointColors[mode] : `#${leg.serviceJourney.line.presentation.colour}`,
-                opacity: 1,
-                weight: 4,
-            };
-
-            if (mode === 'foot') {
-                borderPolyConfig.dashArray = '0.5, 8';
-                fillPolyConfig.dashArray = '0.5, 8';
-            } else {
-                borderPolyConfig.dashArray = '0, 0';
-                fillPolyConfig.dashArray = '0, 0';
-            }
-
-            newMapData.polylines.push({
-                coordinates: coordinates,
-                config: borderPolyConfig,
-            });
-            newMapData.polylines.push({
-                coordinates: coordinates,
-                config: fillPolyConfig,
-            });
-
-            points.push(coordinates);
-        });
-
-        const startPoints = points[0];
-        const endPoints = points[points.length - 1];
-
-        startPoint = startPoints[0];
-        endPoint = endPoints[endPoints.length - 1];
-
-        const startIcon = Leaflet.icon({
-            iconUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/location-travel-map/map-pin-icon.png',
-            iconSize: [24, 32],
-            iconAnchor: [12, 40],
-            popupAnchor: [0, -32]
-        });
-
-        const endIcon = Leaflet.icon({
-            iconUrl: 'https://cdn3.iconfinder.com/data/icons/auto-racing/441/Checkered_Flag-512.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 40],
-            popupAnchor: [0, -32]
-        });
-
-        newMapData.markers.push({
-            pos: startPoint,
-            icon: startIcon,
-        });
-        newMapData.markers.push({
-            pos: endPoint,
-            icon: endIcon,
-        });
-
-        map.fitBounds(points);
-    }
-
-    //the map actually fits the path this never actually calls
     useEffect(() => {
-        if (startPoint === undefined || endPoint === undefined) {
-            return;
+        const newMapData = {
+            polylines: [],
+            markers: [],
+        };
+
+        const points = [];
+
+        let startPoint;
+        let endPoint;
+
+        if (formData.plans?.data !== undefined) {
+            const trip = formData.plans.data.trip.tripPatterns[formData.selectedPlan];
+            trip.legs.forEach(leg => {
+                const mode = leg.mode;
+                const curPoints = leg.pointsOnLink.points;
+                const coordinates = polyline.decode(curPoints).map(coord => [coord[0], coord[1]]);
+
+                const borderPolyConfig = {
+                    color: '#ffffff',
+                    opacity: 1,
+                    weight: 8,
+                };
+
+                const fillPolyConfig = {
+                    color: mode === 'foot' ? transportPointColors[mode] : `#${leg.serviceJourney.line.presentation.colour}`,
+                    opacity: 1,
+                    weight: 4,
+                };
+
+                if (mode === 'foot') {
+                    borderPolyConfig.dashArray = '0.5, 8';
+                    fillPolyConfig.dashArray = '0.5, 8';
+                } else {
+                    borderPolyConfig.dashArray = '0, 0';
+                    fillPolyConfig.dashArray = '0, 0';
+                }
+
+                newMapData.polylines.push({
+                    coordinates: coordinates,
+                    config: borderPolyConfig,
+                });
+                newMapData.polylines.push({
+                    coordinates: coordinates,
+                    config: fillPolyConfig,
+                });
+
+                points.push(coordinates);
+            });
+
+            const startPoints = points[0];
+            const endPoints = points[points.length - 1];
+
+            startPoint = startPoints[0];
+            endPoint = endPoints[endPoints.length - 1];
+
+            const startIcon = Leaflet.icon({
+                iconUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/location-travel-map/map-pin-icon.png',
+                iconSize: [24, 32],
+                iconAnchor: [12, 40],
+                popupAnchor: [0, -32]
+            });
+
+            const endIcon = Leaflet.icon({
+                iconUrl: 'https://cdn3.iconfinder.com/data/icons/auto-racing/441/Checkered_Flag-512.png',
+                iconSize: [32, 32],
+                iconAnchor: [16, 40],
+                popupAnchor: [0, -32]
+            });
+
+            newMapData.markers.push({
+                pos: startPoint,
+                icon: startIcon,
+            });
+            newMapData.markers.push({
+                pos: endPoint,
+                icon: endIcon,
+            });
+
+            map.fitBounds(points);
         }
 
-        setMapCenter([startPoint, endPoint]);
-    }, []);
+        setMapData(newMapData);
+    }, [formData.selectedPlan, formData.plans?.data]);
 
     return (
         <>
-            {newMapData.markers.map((marker, index) => {
+            {mapData.markers.map((marker, index) => {
                 return (
                     <Marker key={index} position={marker.pos} icon={marker.icon}>
                         <Popup>
@@ -1316,7 +1310,7 @@ function JourneyPlannerMap() {
                     </Marker>
                 );
             })}
-            {newMapData.polylines.map((polyline, index) => {
+            {mapData.polylines.map((polyline, index) => {
                 return (
                     <Polyline key={index} positions={polyline.coordinates} pathOptions={polyline.config} />
                 );
@@ -1333,7 +1327,7 @@ function JourneyPlannerMap() {
 
 //departures
 function DeparturesContainer({ children }) {
-    const { selectedForm, setResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs } = useContext(journeyPlannerContext);
 
     const fetchNewDepartures = (setPlans, body) => {
         fetch('https://api.entur.io/journey-planner/v3/graphql', {
@@ -1366,10 +1360,13 @@ function DeparturesContainer({ children }) {
         return generateDeparturesQuery(planData.from.location);
     }
 
-    const departuresFormData = usePlannerFormData({
-        from: {
-            input: '',
-        },
+    const departuresFormData = usePlannerFormData(inputs[selectedForm], (value) => {
+        setInputs((prev) => {
+            return {
+                ...prev,
+                [selectedForm]: typeof (value) === 'function' ? value(prev[selectedForm]) : value,
+            };
+        });
     }, fetchNewDepartures, generateDeparturesQueryFromData);
 
     useEffect(() => {
@@ -1547,61 +1544,61 @@ function DeparturesResults({ results }) {
 
 function DeparturesMap() {
     const { formData } = useContext(formDataContext);
-    const { setMapCenter } = useContext(journeyPlannerContext);
 
-    const newMapData = {
+    const [mapData, setMapData] = useState({
         markers: [],
-    };
+    })
 
-    const stopPlace = formData.plans?.data.stopPlace;
+    const map = useMap();
 
-    let targetPoint;
+    useEffect(() => {
+        const newMapData = {
+            markers: [],
+        };
 
-    if (stopPlace) {
-        targetPoint = [stopPlace.latitude, stopPlace.longitude];
+        const stopPlace = formData.plans?.data.stopPlace;
 
-        const targetIcon = Leaflet.icon({
-            iconUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/location-travel-map/map-pin-icon.png',
-            iconSize: [24, 32],
-            iconAnchor: [12, 40],
-            popupAnchor: [0, -32]
-        });
+        if (stopPlace) {
+            const targetPoint = [stopPlace.latitude, stopPlace.longitude];
 
-        newMapData.markers.push({
-            pos: targetPoint,
-            icon: targetIcon,
-        });
-
-        stopPlace.quays.forEach((quay) => {
-            if (quay.publicCode === null || quay.publicCode === '') return;
-
-            const quayMode = quay.stopPlace.transportMode[0];
+            const targetIcon = Leaflet.icon({
+                iconUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/location-travel-map/map-pin-icon.png',
+                iconSize: [24, 32],
+                iconAnchor: [12, 40],
+                popupAnchor: [0, -32]
+            });
 
             newMapData.markers.push({
-                pos: [quay.latitude, quay.longitude],
-                icon: Leaflet.divIcon({
-                    className: 'journey_planner_map_quay_icon',
-                    html: (quayMode === 'bus' ? BusPlatformIconHTML : RailPlatformIconHTML)({ platform: quay.publicCode }),
-                    iconSize: [26, 30],
-                    iconAnchor: [13, 38],
-                    popupAnchor: [0, -30],
-                }),
+                pos: targetPoint,
+                icon: targetIcon,
             });
-        })
-    }
 
-    //the map actually fits the path this never actually calls
-    useEffect(() => {
-        if (targetPoint === undefined) {
-            return;
+            stopPlace.quays.forEach((quay) => {
+                if (quay.publicCode === null || quay.publicCode === '') return;
+
+                const quayMode = quay.stopPlace.transportMode[0];
+
+                newMapData.markers.push({
+                    pos: [quay.latitude, quay.longitude],
+                    icon: Leaflet.divIcon({
+                        className: 'journey_planner_map_quay_icon',
+                        html: (quayMode === 'bus' ? BusPlatformIconHTML : RailPlatformIconHTML)({ platform: quay.publicCode }),
+                        iconSize: [26, 30],
+                        iconAnchor: [13, 38],
+                        popupAnchor: [0, -30],
+                    }),
+                });
+            });
+
+            map.fitBounds(newMapData.markers.map((marker) => marker.pos));
         }
 
-        setMapCenter(targetPoint);
-    }, []);
+        setMapData(newMapData);
+    }, [formData.selectedPlan, formData.plans?.data]);
 
     return (
         <>
-            {newMapData.markers.map((marker, index) => {
+            {mapData.markers.map((marker, index) => {
                 return (
                     <Marker key={index} position={marker.pos} icon={marker.icon} />
                 );
@@ -1655,6 +1652,22 @@ function JourneyPlanner() {
 export default function Index() {
     const [selectedForm, setSelectedForm] = useState('journey_planner');
     const [isURLLoaded, setIsURLLoaded] = useState(false);
+
+    const [inputs, setInputs] = useState({
+        journey_planner: {
+            from: {
+                input: '',
+            },
+            to: {
+                input: '',
+            },
+        },
+        departures: {
+            from: {
+                input: '',
+            },
+        },
+    });
 
     const [results, setResults] = useState({});
 
@@ -1810,11 +1823,11 @@ export default function Index() {
                 curForm: curForm,
                 results: results,
                 setResults: setResults,
-                mapCenter: mapCenter,
-                setMapCenter: setMapCenter,
                 isURLLoaded: isURLLoaded,
                 setIsURLLoaded: setIsURLLoaded,
                 updateUrl: updateUrl,
+                inputs: inputs,
+                setInputs: setInputs,
             }}>
                 {React.createElement(curForm.container, {
                     updateUrl: updateUrl,
