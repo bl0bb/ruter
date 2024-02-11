@@ -539,6 +539,7 @@ function generateDeparturesQuery(stopPlace) {
               __typename
             }
             subsequentEstimatedCalls: estimatedCalls(timeRange: 14400, whiteListed: $whiteListed, numberOfDepartures: 500, numberOfDeparturesPerLineAndDestinationDisplay: $numberOfSubsequentEstimatedCalls, omitNonBoarding: true) {
+                aimedDepartureTime
               expectedDepartureTime
               realtime
               destinationDisplay {
@@ -1486,31 +1487,54 @@ function DeparturesForm() {
 
 function DeparturesResults({ results }) {
     return results?.data.stopPlace?.quays.filter((quay) => quay.publicCode !== null && quay.publicCode !== '').map((quay, index) => {
+        const calls = [];
+        for (let i = 0; i < quay.estimatedCalls.length; i++) {
+            const curCall = quay.estimatedCalls[i];
+            calls.push({
+                service: curCall,
+                calls: [curCall],
+            });
+        }
+        for (let i = 0; i < quay.subsequentEstimatedCalls.length; i++) {
+            const curCall = quay.subsequentEstimatedCalls[i];
+            const found = calls.find((checkCall) => curCall.serviceJourney.line.id === checkCall.service.serviceJourney.line.id);
+            found.calls.push(curCall);
+        }
+
         return (
-            <div key={index}>
-                <div>
-                    Platform{quay.publicCode ? ` ${quay.publicCode}` : ''}{quay.description ? ` ${quay.description}` : ''}
+            <div key={index} className='journey_planner_result'>
+                <div className='journey_planner_departure_platform'>
+                    Plattform{quay.publicCode ? ` ${quay.publicCode}` : ''}{quay.description ? ` ${quay.description}` : ''}
                 </div>
-                <div>
-                    {quay.estimatedCalls.map((departure, index) => {
-                        const expectedDepartureTime = new Date(departure.expectedDepartureTime);
-                        const aimedDepartureTime = new Date(departure.aimedDepartureTime);
+                <div className='journey_planner_departure_lines'>
+                    {calls.map((call, index) => {
+                        const service = call.service;
                         return (
-                            <div key={index} className='journey_planner_result' onClick={() => {
+                            <div key={index} className='journey_planner_departure_line' onClick={() => {
 
                             }}>
-                                <div className='journey_planner_result_top_info'>
-                                    <div className='journey_planner_result_top_info_expected_time departure_top_info_time'>
-                                        {getHourMinDate(expectedDepartureTime)}
-                                    </div>
-                                    {expectedDepartureTime.valueOf() !== aimedDepartureTime.valueOf() ? (
-                                        <div className='journey_planner_result_top_info_aimed_time departure_top_info_time'>
-                                            {getHourMinDate(aimedDepartureTime)}
-                                        </div>
-                                    ) : undefined}
-                                </div>
                                 <div className='journey_planner_result_content_info'>
-                                    <TransportIdLabeled transportType={departure.serviceJourney.line.transportMode} transportNumber={departure.serviceJourney.line.publicCode} label={departure.destinationDisplay.frontText} />
+                                    <TransportIdLabeled transportColor={`#${service.serviceJourney.line.presentation.colour}`} transportType={service.serviceJourney.line.transportMode} transportNumber={service.serviceJourney.line.publicCode} label={service.destinationDisplay.frontText} />
+                                </div>
+                                <div className='journey_planner_departure_line_calls'>
+                                    {call.calls.map((departure, index) => {
+                                        const expectedDepartureTime = new Date(departure.expectedDepartureTime);
+                                        const aimedDepartureTime = new Date(departure.aimedDepartureTime);
+                                        return (
+                                            <div key={index} className='journey_planner_departure_line_call' onClick={() => {
+
+                                            }}>
+                                                <div className='journey_planner_result_top_info_expected_time departure_top_info_time'>
+                                                    {getHourMinDate(expectedDepartureTime)}
+                                                </div>
+                                                {expectedDepartureTime.valueOf() !== aimedDepartureTime.valueOf() ? (
+                                                    <div className='journey_planner_result_top_info_aimed_time departure_top_info_time'>
+                                                        {getHourMinDate(aimedDepartureTime)}
+                                                    </div>
+                                                ) : undefined}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
@@ -1552,7 +1576,6 @@ function DeparturesMap() {
             if (quay.publicCode === null || quay.publicCode === '') return;
 
             const quayMode = quay.stopPlace.transportMode[0];
-            console.log(quay, quayMode);
 
             newMapData.markers.push({
                 pos: [quay.latitude, quay.longitude],
@@ -1675,7 +1698,6 @@ export default function Index() {
     */
 
     const updateUrl = (data) => {
-        console.log("womp womp", data)
         const url = new URL(window.location.href);
         const searchParams = new URLSearchParams();
         for (const [key, value] of Object.entries(data)) {
