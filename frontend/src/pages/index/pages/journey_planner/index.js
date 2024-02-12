@@ -14,7 +14,7 @@ const journeyPlannerContext = createContext();
 const formDataContext = createContext();
 
 const transportPointColors = {
-    foot: 'rgb(80, 80, 80)',
+    foot: 'var(--main-bg-col)',
     bus: 'rgb(118, 163, 0)',
     coach: 'rgb(118, 163, 0)',
     rail: 'rgb(0, 48, 135)',
@@ -232,6 +232,11 @@ function BusPlatformIconHTML({ platform }) {
 
 
 
+function getWalkDistance(distance) {
+    return `${Math.floor((distance * 0.001) * 100) / 100} km`;
+}
+
+
 
 
 
@@ -259,9 +264,9 @@ function TransportId({ transportColor, transportType, transportNumber }) {
 
 function WalkTransportId({ distance }) {
     return (
-        <BaseTransportId transportColor={'rgb(80, 80, 80)'} transportIcon={WalkIcon} content={(
+        <BaseTransportId transportColor={transportPointColors.foot} transportIcon={WalkIcon} content={(
             <div className='walk_transport_id_distance'>
-                {Math.floor((distance * 0.001) * 100) / 100} km
+                {getWalkDistance(distance)}
             </div>
         )} />
     );
@@ -934,12 +939,11 @@ function generatePlansQuery(from, to) {
     };
 }
 
-function usePlannerFormData(planData, setPlanData, fetchResults, generateQuery) {
+function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedResults, fetchResults, generateQuery) {
     const { updateUrl, isURLLoaded } = useContext(journeyPlannerContext);
 
     const [curPlanQuery, setCurPlanQuery] = useState();
     const [plans, setPlans] = useState();
-    const [selectedPlan, setSelectedPlan] = useState(0);
 
     const fetchNewPlans = () => {
         fetchResults(setPlans, JSON.stringify(curPlanQuery));
@@ -970,8 +974,6 @@ function usePlannerFormData(planData, setPlanData, fetchResults, generateQuery) 
         setCurPlanQuery,
         plans,
         setPlans,
-        selectedPlan,
-        setSelectedPlan,
     };
 }
 
@@ -983,7 +985,7 @@ function usePlannerFormData(planData, setPlanData, fetchResults, generateQuery) 
 
 //journey
 function PlansContainer({ children }) {
-    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs } = useContext(journeyPlannerContext);
+    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
 
     //TODO: use V3 instead of V2
     const fetchNewPlans = (setPlans, body) => {
@@ -1022,6 +1024,13 @@ function PlansContainer({ children }) {
             return {
                 ...prev,
                 [selectedForm]: typeof (value) === 'function' ? value(prev[selectedForm]) : value,
+            };
+        });
+    }, selectedResults[selectedForm], (value) => {
+        setSelectedResults((prev) => {
+            return {
+                ...prev,
+                [selectedForm]: value,
             };
         });
     }, fetchNewPlans, generatePlansQueryFromData);
@@ -1157,14 +1166,19 @@ function JourneyPlannerForm() {
 }
 
 function JourneyResults({ results }) {
-    const { formData } = useContext(formDataContext);
+    const { selectedForm, setSelectedResults } = useContext(journeyPlannerContext);
 
     return results?.data.trip.tripPatterns.map((journey, index) => {
         const startTime = new Date(journey.startTime);
         const endTime = new Date(journey.endTime);
         return (
             <button key={index} className='journey_planner_result' onClick={() => {
-                formData.setSelectedPlan(index);
+                setSelectedResults((prev) => {
+                    return {
+                        ...prev,
+                        [selectedForm]: index,
+                    };
+                });
             }}>
                 <div className='journey_planner_result_top_info'>
                     <div className='journey_planner_result_top_info_expected_time journey_planner_result_top_info_time'>
@@ -1200,9 +1214,140 @@ function JourneyResults({ results }) {
     });
 }
 
+function JourneySelectedResultSegmentRow({ left, middle, right }) {
+    return (
+        <div className='journey_planner_selected_result_segment_row'>
+            <div className='journey_planner_selected_result_segment_row_side journey_planner_selected_result_segment_row_left'>
+                {left}
+            </div>
+            <div className='journey_planner_selected_result_segment_row_side journey_planner_selected_result_segment_row_middle'>
+                {middle}
+            </div>
+            <div className='journey_planner_selected_result_segment_row_side journey_planner_selected_result_segment_row_right'>
+                {right}
+            </div>
+        </div>
+    );
+}
+
+function JourneySelectedResult({ result, selectedResult }) {
+    const selectedJourney = result?.data.trip.tripPatterns[selectedResult];
+    return (
+        <div id='journey_planner_selected_result_segments'>
+            {selectedJourney?.legs.map((leg, index) => {
+                const mode = leg.mode;
+
+                let content;
+
+                if (mode === 'foot') {
+                    content = (
+                        <JourneySelectedResultSegmentRow
+                            middle={
+                                <div>
+                                    ⚪
+                                </div>
+                            }
+                            right={<>
+                                <div>
+                                    🚶
+                                </div>
+                                <div>
+                                    {getWalkDistance(leg.distance)}
+                                </div>
+                            </>}
+                        />
+                    );
+                } else {
+                    const fromEstimatedCall = leg.fromEstimatedCall;
+                    const fromExpectedDepartureTime = new Date(fromEstimatedCall.expectedDepartureTime);
+                    const fromAimedDepartureTime = new Date(fromEstimatedCall.aimedDepartureTime);
+
+                    const toEstimatedCall = leg.toEstimatedCall;
+                    const toExpectedDepartureTime = new Date(toEstimatedCall.expectedDepartureTime);
+                    const toAimedDepartureTime = new Date(toEstimatedCall.aimedDepartureTime);
+
+                    content = (
+                        <>
+                            <JourneySelectedResultSegmentRow
+                                left={
+                                    <div>
+                                        <div>
+                                            {getHourMinDate(fromExpectedDepartureTime)}
+                                        </div>
+                                        {fromExpectedDepartureTime.valueOf() !== fromAimedDepartureTime.valueOf() ? (
+                                            <div>
+                                                {getHourMinDate(fromAimedDepartureTime)}
+                                            </div>
+                                        ) : undefined}
+                                    </div>
+                                }
+                                middle={
+                                    <div>
+                                        🟢
+                                    </div>
+                                }
+                                right={
+                                    <div>
+                                        {fromEstimatedCall.quay.name}
+                                    </div>
+                                }
+                            />
+                            <JourneySelectedResultSegmentRow
+                                middle={
+                                    <div>
+                                        🟢
+                                    </div>
+                                }
+                                right={
+                                    <TransportIdLabeled
+                                        transportColor={`#${leg.serviceJourney.line.presentation.colour}`}
+                                        transportType={leg.serviceJourney.line.transportMode}
+                                        transportNumber={leg.serviceJourney.line.publicCode}
+                                        label={leg.fromEstimatedCall.destinationDisplay.frontText}
+                                    />
+                                }
+                            />
+                            <JourneySelectedResultSegmentRow
+                                left={
+                                    <div>
+                                        <div>
+                                            {getHourMinDate(toExpectedDepartureTime)}
+                                        </div>
+                                        {toExpectedDepartureTime.valueOf() !== toAimedDepartureTime.valueOf() ? (
+                                            <div>
+                                                {getHourMinDate(toAimedDepartureTime)}
+                                            </div>
+                                        ) : undefined}
+                                    </div>
+                                }
+                                middle={
+                                    <div>
+                                        🟢
+                                    </div>
+                                }
+                                right={
+                                    <div>
+                                        {toEstimatedCall.quay.name}
+                                    </div>
+                                }
+                            />
+                        </>
+                    );
+                }
+
+                return (
+                    <div key={index} className='journey_planner_selected_result_segment'>
+                        {content}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 function JourneyPlannerMap() {
     const { formData } = useContext(formDataContext);
-    const { results, selectedForm } = useContext(journeyPlannerContext)
+    const { results, selectedForm, selectedResults } = useContext(journeyPlannerContext)
 
     const [mapData, setMapData] = useState({
         polylines: [],
@@ -1225,7 +1370,7 @@ function JourneyPlannerMap() {
         let endPoint;
 
         if (curResults?.data !== undefined) {
-            const trip = curResults.data.trip.tripPatterns[formData.selectedPlan];
+            const trip = curResults.data.trip.tripPatterns[selectedResults[selectedForm]];
             trip.legs.forEach(leg => {
                 const mode = leg.mode;
                 const curPoints = leg.pointsOnLink.points;
@@ -1296,7 +1441,7 @@ function JourneyPlannerMap() {
         }
 
         setMapData(newMapData);
-    }, [formData.selectedPlan, curResults]);
+    }, [selectedResults[selectedForm], curResults]);
 
     return (
         <>
@@ -1326,7 +1471,7 @@ function JourneyPlannerMap() {
 
 //departures
 function DeparturesContainer({ children }) {
-    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs } = useContext(journeyPlannerContext);
+    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
 
     const fetchNewDepartures = (setPlans, body) => {
         fetch('https://api.entur.io/journey-planner/v3/graphql', {
@@ -1364,6 +1509,13 @@ function DeparturesContainer({ children }) {
             return {
                 ...prev,
                 [selectedForm]: typeof (value) === 'function' ? value(prev[selectedForm]) : value,
+            };
+        });
+    }, selectedResults[selectedForm], (value) => {
+        setSelectedResults((prev) => {
+            return {
+                ...prev,
+                [selectedForm]: value,
             };
         });
     }, fetchNewDepartures, generateDeparturesQueryFromData);
@@ -1461,6 +1613,8 @@ function DeparturesForm() {
 }
 
 function DeparturesResults({ results }) {
+    const { selectedForm, setSelectedResults } = useContext(journeyPlannerContext);
+
     return results?.data.stopPlace?.quays.filter((quay) => quay.publicCode !== null && quay.publicCode !== '').map((quay, index) => {
         const calls = [];
         for (let i = 0; i < quay.estimatedCalls.length; i++) {
@@ -1477,7 +1631,14 @@ function DeparturesResults({ results }) {
         }
 
         return (
-            <div key={index} className='journey_planner_result'>
+            <button key={index} className='journey_planner_result' onClick={(e) => {
+                setSelectedResults((prev) => {
+                    return {
+                        ...prev,
+                        [selectedForm]: index,
+                    };
+                });
+            }}>
                 <div className='journey_planner_departure_platform'>
                     Plattform{quay.publicCode ? ` ${quay.publicCode}` : ''}{quay.description ? ` ${quay.description}` : ''}
                 </div>
@@ -1515,14 +1676,23 @@ function DeparturesResults({ results }) {
                         );
                     })}
                 </div>
-            </div>
+            </button>
         );
     });
 }
 
+function DeparturesSelectedResult({ result, selectedResult }) {
+    console.log("dep", result, selectedResult);
+    return (
+        <>
+            bbop
+        </>
+    )
+}
+
 function DeparturesMap() {
     const { formData } = useContext(formDataContext);
-    const { results, selectedForm } = useContext(journeyPlannerContext)
+    const { results, selectedForm, selectedResults } = useContext(journeyPlannerContext)
 
     const [mapData, setMapData] = useState({
         markers: [],
@@ -1575,7 +1745,7 @@ function DeparturesMap() {
         }
 
         setMapData(newMapData);
-    }, [formData.selectedPlan, curResults]);
+    }, [selectedResults[selectedForm], curResults]);
 
     return (
         <>
@@ -1598,12 +1768,24 @@ function DeparturesMap() {
 
 
 //bbop
-function JourneyPlannerResults({ selectedForm, forms }) {
-    const { results } = useContext(journeyPlannerContext);
+function JourneyPlannerResults() {
+    const { selectedForm, forms, results } = useContext(journeyPlannerContext);
     return (
         <>
             {React.createElement(forms[selectedForm].results, {
                 results: results[selectedForm],
+            })}
+        </>
+    );
+}
+
+function JourneyPlannerSelectedResult() {
+    const { selectedForm, forms, results, selectedResults } = useContext(journeyPlannerContext);
+    return (
+        <>
+            {React.createElement(forms[selectedForm].selectedResult, {
+                result: results[selectedForm],
+                selectedResult: selectedResults[selectedForm],
             })}
         </>
     );
@@ -1651,6 +1833,11 @@ export default function Index() {
         },
     });
 
+    const [selectedResults, setSelectedResults] = useState({
+        journey_planner: 0,
+        departures: 0,
+    });
+
     const [results, setResults] = useState({});
 
     const forms = {
@@ -1662,6 +1849,7 @@ export default function Index() {
             container: PlansContainer,
             form: JourneyPlannerForm,
             results: JourneyResults,
+            selectedResult: JourneySelectedResult,
             map: JourneyPlannerMap,
         },
         departures: {
@@ -1671,6 +1859,7 @@ export default function Index() {
             container: DeparturesContainer,
             form: DeparturesForm,
             results: DeparturesResults,
+            selectedResult: DeparturesSelectedResult,
             map: DeparturesMap,
         },
     };
@@ -1752,6 +1941,8 @@ export default function Index() {
                 updateUrl: updateUrl,
                 inputs: inputs,
                 setInputs: setInputs,
+                selectedResults: selectedResults,
+                setSelectedResults: setSelectedResults,
             }}>
                 {React.createElement(curForm.container, {}, (
                     <>
@@ -1762,6 +1953,9 @@ export default function Index() {
                                     <JourneyPlannerResults selectedForm={selectedForm} forms={forms} />
                                 </div>
                             </div>
+                        </div>
+                        <div id='journey_planner_selected_result'>
+                            <JourneyPlannerSelectedResult />
                         </div>
                         <div id='journey_planner_content'>
                             <div id='journey_planner_content_map_container'>
