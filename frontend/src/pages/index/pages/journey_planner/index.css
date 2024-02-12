@@ -26,9 +26,10 @@
 }
 
 #journey_planner_planner_form_display_select {
+    display: flex;
     position: relative;
     z-index: 2;
-    display: flex;
+    overflow: auto hidden;
 }
 
 .journey_planner_form_display_select_button {
@@ -40,6 +41,7 @@
 
 .journey_planner_form_display_select_button.journey_planner_form_display_select_button_selected {
     background-color: var(--main-bg-light-col-1);
+    box-shadow: var(--main-box-shadow-1);
 }
 
 
@@ -86,7 +88,7 @@
 }
 
 .journey_planner_form_place_input_container {
-    --journey-planner-form-place-input-border: 1px solid rgb(150, 150, 150);
+    --journey-planner-form-place-input-border: 1px solid var(--main-bg-light-col-2);
     --journey-planner-form-place-input-input-field-pad: 12px;
     position: relative;
     display: flex;
@@ -138,10 +140,11 @@
     max-height: 400px;
     width: 100%;
     z-index: 1;
-    background-color: var(--main-bg-light-col-1);
+    background-color: var(--main-bg-dark-col-1);
     border-left: var(--journey-planner-form-place-input-border);
     border-right: var(--journey-planner-form-place-input-border);
     border-bottom: var(--journey-planner-form-place-input-border);
+    box-shadow: var(--main-box-shadow-1);
     border-radius: 0 0 8px 8px;
     box-sizing: border-box;
     overflow: hidden auto;
@@ -163,7 +166,7 @@
 }
 
 .journey_planner_form_place_input_suggestion:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--main-bg-light-col-2);
 }
 
 .journey_planner_form_place_input_suggestion:hover {
@@ -286,13 +289,13 @@
 .journey_planner_departure_lines {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .journey_planner_departure_line {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     padding: 8px;
     border-radius: 8px;
     background-color: var(--main-bg-col);

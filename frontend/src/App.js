@@ -9,7 +9,7 @@ import IndexLayout from './pages/index/layout/index';
 import Index from './pages/index/pages/index/index';
 import JourneyPlanner from './pages/index/pages/journey_planner/index';
 
-function App() {
+export default function App() {
     return (
         <BrowserRouter>
             <Routes>
@@ -20,8 +20,6 @@ function App() {
                     </Route>
                 </Route>
             </Routes>
-        </BrowserRouter >
+        </BrowserRouter>
     );
 }
-
-export default App;

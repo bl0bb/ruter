@@ -388,8 +388,8 @@ function JourneyPlannerPlaceInput({ name, label, icons, searchInput, setSearchIn
                                     </div>
                                 </div>
                                 <div className='journey_planner_form_place_input_suggestion_icons'>
-                                    {layer === 'venue' ? removeDuplicates(categories).map((category) => {
-                                        return React.createElement(transportIcons[transportationCategories[category]]);
+                                    {layer === 'venue' ? removeDuplicates(categories).map((category, index) => {
+                                        return React.createElement(transportIcons[transportationCategories[category]], { key: index });
                                     }) : React.createElement(PointPinIcon)}
                                 </div>
                             </button>
@@ -400,10 +400,6 @@ function JourneyPlannerPlaceInput({ name, label, icons, searchInput, setSearchIn
         </div>
     );
 }
-
-//drømp 4977
-//oslo 59872
-//NSR:StopPlace:593258//change num with id
 
 
 function generateDeparturesQuery(stopPlace) {
@@ -1206,6 +1202,7 @@ function JourneyResults({ results }) {
 
 function JourneyPlannerMap() {
     const { formData } = useContext(formDataContext);
+    const { results, selectedForm } = useContext(journeyPlannerContext)
 
     const [mapData, setMapData] = useState({
         polylines: [],
@@ -1213,6 +1210,8 @@ function JourneyPlannerMap() {
     });
 
     const map = useMap();
+
+    const curResults = results[selectedForm];
 
     useEffect(() => {
         const newMapData = {
@@ -1225,8 +1224,8 @@ function JourneyPlannerMap() {
         let startPoint;
         let endPoint;
 
-        if (formData.plans?.data !== undefined) {
-            const trip = formData.plans.data.trip.tripPatterns[formData.selectedPlan];
+        if (curResults?.data !== undefined) {
+            const trip = curResults.data.trip.tripPatterns[formData.selectedPlan];
             trip.legs.forEach(leg => {
                 const mode = leg.mode;
                 const curPoints = leg.pointsOnLink.points;
@@ -1297,7 +1296,7 @@ function JourneyPlannerMap() {
         }
 
         setMapData(newMapData);
-    }, [formData.selectedPlan, formData.plans?.data]);
+    }, [formData.selectedPlan, curResults]);
 
     return (
         <>
@@ -1370,12 +1369,10 @@ function DeparturesContainer({ children }) {
     }, fetchNewDepartures, generateDeparturesQueryFromData);
 
     useEffect(() => {
-        /*
         const url = new URL(window.location.href);
         const searchParams = url.searchParams;
 
         const from = searchParams.get('from');
-        const to = searchParams.get('to');
 
         const loadPlace = (str, cb) => {
             fetch(`https://api.entur.io/geocoder/v1/autocomplete?text=${str}&lang=en`, {
@@ -1394,7 +1391,7 @@ function DeparturesContainer({ children }) {
             });
         }
 
-        if (from === null && to === null) {
+        if (from === null) {
             setIsURLLoaded(true);
             return;
         }
@@ -1411,7 +1408,7 @@ function DeparturesContainer({ children }) {
         if (from) {
             loadingProps.from = false;
             loadPlace(from, (place) => {
-                plansFormData.setPlanData((prev) => {
+                departuresFormData.setPlanData((prev) => {
                     return {
                         ...prev,
                         from: {
@@ -1425,25 +1422,6 @@ function DeparturesContainer({ children }) {
                 checkDoneLoading();
             });
         }
-
-        if (to) {
-            loadingProps.to = false;
-            loadPlace(to, (place) => {
-                plansFormData.setPlanData((prev) => {
-                    return {
-                        ...prev,
-                        to: {
-                            ...prev.to,
-                            location: place,
-                            input: place.properties.name,
-                        },
-                    };
-                });
-                loadingProps.to = true;
-                checkDoneLoading();
-            });
-        }
-        */
     }, []);
 
     return (
@@ -1492,7 +1470,7 @@ function DeparturesResults({ results }) {
                 calls: [curCall],
             });
         }
-        for (let i = 0; i < quay.subsequentEstimatedCalls.length; i++) {
+        for (let i = 1; i < quay.subsequentEstimatedCalls.length; i++) {
             const curCall = quay.subsequentEstimatedCalls[i];
             const found = calls.find((checkCall) => curCall.serviceJourney.line.id === checkCall.service.serviceJourney.line.id);
             found.calls.push(curCall);
@@ -1544,19 +1522,22 @@ function DeparturesResults({ results }) {
 
 function DeparturesMap() {
     const { formData } = useContext(formDataContext);
+    const { results, selectedForm } = useContext(journeyPlannerContext)
 
     const [mapData, setMapData] = useState({
         markers: [],
-    })
+    });
 
     const map = useMap();
+
+    const curResults = results[selectedForm];
 
     useEffect(() => {
         const newMapData = {
             markers: [],
         };
 
-        const stopPlace = formData.plans?.data.stopPlace;
+        const stopPlace = curResults?.data.stopPlace;
 
         if (stopPlace) {
             const targetPoint = [stopPlace.latitude, stopPlace.longitude];
@@ -1594,7 +1575,7 @@ function DeparturesMap() {
         }
 
         setMapData(newMapData);
-    }, [formData.selectedPlan, formData.plans?.data]);
+    }, [formData.selectedPlan, curResults]);
 
     return (
         <>
@@ -1636,9 +1617,9 @@ function JourneyPlanner() {
             <div id='journey_planner_planner_form_display_select'>
                 {Object.values(forms).map((form, index) => {
                     return (
-                        <div key={index} className={`journey_planner_form_display_select_button${selectedForm === form.id ? ' journey_planner_form_display_select_button_selected' : ''}`} onClick={() => setSelectedForm(form.id)}>
+                        <button key={index} className={`journey_planner_form_display_select_button${selectedForm === form.id ? ' journey_planner_form_display_select_button_selected' : ''}`} onClick={() => setSelectedForm(form.id)}>
                             {form.name}
-                        </div>
+                        </button>
                     );
                 })}
             </div>
@@ -1650,6 +1631,7 @@ function JourneyPlanner() {
 }
 
 export default function Index() {
+    //TODO: append initial values as stuff retrieved from url too lazy to do it rn
     const [selectedForm, setSelectedForm] = useState('journey_planner');
     const [isURLLoaded, setIsURLLoaded] = useState(false);
 
@@ -1674,6 +1656,8 @@ export default function Index() {
     const forms = {
         journey_planner: {
             id: 'journey_planner',
+            urlIndex: true,
+            urlType: 'j',
             name: 'Journey Planner',
             container: PlansContainer,
             form: JourneyPlannerForm,
@@ -1682,6 +1666,7 @@ export default function Index() {
         },
         departures: {
             id: 'departures',
+            urlType: 'd',
             name: 'Departures',
             container: DeparturesContainer,
             form: DeparturesForm,
@@ -1713,6 +1698,10 @@ export default function Index() {
     const updateUrl = (data) => {
         const url = new URL(window.location.href);
         const searchParams = new URLSearchParams();
+        const curForm = forms[selectedForm];
+        if (curForm.urlIndex !== true) {
+            searchParams.append('type', curForm.urlType);
+        }
         for (const [key, value] of Object.entries(data)) {
             if (value.location === undefined) {
                 continue;
@@ -1725,82 +1714,17 @@ export default function Index() {
 
 
 
-
     useEffect(() => {
-        /*
         const url = new URL(window.location.href);
         const searchParams = url.searchParams;
 
-        const from = searchParams.get('from');
-        const to = searchParams.get('to');
+        const type = searchParams.get('type');
 
-        const loadPlace = (str, cb) => {
-            fetch(`https://api.entur.io/geocoder/v1/autocomplete?text=${str}&lang=en`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }).then((res) => {
-                if (res.ok) {
-                    res.json().then((data) => {
-                        const place = data.features[0];
-
-                        cb(place);
-                    });
-                }
-            });
+        if (type === null) {
+            setSelectedForm(Object.values(forms).find((form) => form.urlIndex === true).id);
+        } else {
+            setSelectedForm(Object.values(forms).find((form) => form.urlType === type).id);
         }
-
-        if (from === null && to === null) {
-            setIsURLLoaded(true);
-            return;
-        }
-
-        const loadingProps = {};
-
-        const checkDoneLoading = () => {
-            if (Object.values(loadingProps).includes(false) === true) {
-                return;
-            }
-            setIsURLLoaded(true);
-        }
-
-        if (from) {
-            loadingProps.from = false;
-            loadPlace(from, (place) => {
-                plansFormData.setPlanData((prev) => {
-                    return {
-                        ...prev,
-                        from: {
-                            ...prev.from,
-                            location: place,
-                            input: place.properties.name,
-                        },
-                    };
-                });
-                loadingProps.from = true;
-                checkDoneLoading();
-            });
-        }
-
-        if (to) {
-            loadingProps.to = false;
-            loadPlace(to, (place) => {
-                plansFormData.setPlanData((prev) => {
-                    return {
-                        ...prev,
-                        to: {
-                            ...prev.to,
-                            location: place,
-                            input: place.properties.name,
-                        },
-                    };
-                });
-                loadingProps.to = true;
-                checkDoneLoading();
-            });
-        }
-        */
     }, []);
 
 
@@ -1829,10 +1753,7 @@ export default function Index() {
                 inputs: inputs,
                 setInputs: setInputs,
             }}>
-                {React.createElement(curForm.container, {
-                    updateUrl: updateUrl,
-                    isURLLoaded: isURLLoaded,
-                }, (
+                {React.createElement(curForm.container, {}, (
                     <>
                         <div id='journey_planner_planner'>
                             <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} />
