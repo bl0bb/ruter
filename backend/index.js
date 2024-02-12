@@ -147,8 +147,7 @@ const APIURLS = [
 
 
 app.use(cors());
-app.use('/public', express.static('public'));
-app.use('/static', express.static('static'));
+app.use('/', express.static(path.join(__dirname, 'build')));
 app.use(express.json({ limit: '5mb' }));
 
 
@@ -224,5 +223,3 @@ app.get('/', (req, res) => {
 app.get('*', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'build', 'index.html'));
 });
-
-console.log('Node server start end');
