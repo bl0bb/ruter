@@ -1282,6 +1282,129 @@ function JourneySelectedResultTime({ expectedStart, aimedStart }) {
     )
 }
 
+function JourneyPlannerSelectedResultWalk({ leg }) {
+    const expectedStartTime = new Date(leg.expectedStartTime);
+    const aimedStartTime = new Date(leg.aimedStartTime);
+
+    const expectedEndTime = new Date(leg.expectedEndTime);
+    const aimedEndTime = new Date(leg.aimedEndTime);
+
+    return (
+        <>
+            <JourneySelectedResultSegmentRow
+                left={
+                    <JourneySelectedResultTime expectedStart={expectedStartTime} aimedStart={aimedStartTime} />
+                }
+                middle={
+                    <JourneySelectedResultLineTop color={transportPointColors.foot} />
+                }
+            />
+            <JourneySelectedResultSegmentRow
+                middle={
+                    <JourneySelectedResultLineMiddle color={transportPointColors.foot} />
+                }
+                right={<>
+                    <div>
+                        <WalkIcon />
+                    </div>
+                    <div>
+                        {getWalkDistance(leg.distance)}
+                    </div>
+                </>}
+            />
+            <JourneySelectedResultSegmentRow
+                left={
+                    <JourneySelectedResultTime expectedStart={expectedEndTime} aimedStart={aimedEndTime} />
+                }
+                middle={
+                    <JourneySelectedResultLineBottom color={transportPointColors.foot} />
+                }
+            />
+        </>
+    );
+}
+
+function JourneyPlannerSelectedResultTransport({ leg }) {
+    const [showStops, setShowStops] = useState(false);
+
+    const fromEstimatedCall = leg.fromEstimatedCall;
+
+    const expectedDepartureTime = new Date(fromEstimatedCall.expectedDepartureTime);
+    const aimedDepartureTime = new Date(fromEstimatedCall.aimedDepartureTime);
+
+    const toEstimatedCall = leg.toEstimatedCall;
+
+    const expectedArrivalTime = new Date(toEstimatedCall.expectedArrivalTime);
+    const aimedArrivalTime = new Date(toEstimatedCall.aimedArrivalTime);
+
+    return (
+        <>
+            <JourneySelectedResultSegmentRow
+                left={
+                    <JourneySelectedResultTime expectedStart={expectedDepartureTime} aimedStart={aimedDepartureTime} />
+                }
+                middle={
+                    <JourneySelectedResultLineTop color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                }
+                right={
+                    <div>
+                        {fromEstimatedCall.quay.name}
+                    </div>
+                }
+            />
+            <JourneySelectedResultSegmentRow
+                middle={
+                    <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                }
+                right={
+                    <div className='journey_planner_selected_result_segment_row_right_info'>
+                        <TransportIdLabeled
+                            transportColor={`#${leg.serviceJourney.line.presentation.colour}`}
+                            transportType={leg.serviceJourney.line.transportMode}
+                            transportNumber={leg.serviceJourney.line.publicCode}
+                            label={leg.fromEstimatedCall.destinationDisplay.frontText}
+                        />
+                    </div>
+                }
+            />
+            <JourneySelectedResultSegmentRow
+                middle={
+                    <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                }
+                right={
+                    leg.intermediateEstimatedCalls.length > 0 ? (
+                        <button className='journey_planner_selected_result_segment_row_right_stops' onClick={() => {
+                            setShowStops(showStops === false);
+                        }}>
+                            <div className='journey_planner_selected_result_segment_row_right_stops_icon' style={{
+                                '--journey-planner-selected-result-segment-row-right-stops-icon-color': `#${leg.serviceJourney.line.presentation.colour}`,
+                            }}>
+
+                            </div>
+                            <div className='journey_planner_selected_result_segment_row_right_stops_stops'>
+                                {leg.intermediateEstimatedCalls.length} stops
+                            </div>
+                        </button>
+                    ) : undefined
+                }
+            />
+            <JourneySelectedResultSegmentRow
+                left={
+                    <JourneySelectedResultTime expectedStart={expectedArrivalTime} aimedStart={aimedArrivalTime} />
+                }
+                middle={
+                    <JourneySelectedResultLineBottom color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                }
+                right={
+                    <div>
+                        {toEstimatedCall.quay.name}
+                    </div>
+                }
+            />
+        </>
+    );
+}
+
 function JourneySelectedResult({ result, selectedResult }) {
     const selectedJourney = result?.data.trip.tripPatterns[selectedResult];
     return (
@@ -1295,100 +1418,12 @@ function JourneySelectedResult({ result, selectedResult }) {
                     console.log(leg)
 
                     if (mode === 'foot') {
-                        const expectedStartTime = new Date(leg.expectedStartTime);
-                        const aimedStartTime = new Date(leg.aimedStartTime);
-
-                        const expectedEndTime = new Date(leg.expectedEndTime);
-                        const aimedEndTime = new Date(leg.aimedEndTime);
-
                         content = (
-                            <>
-                                <JourneySelectedResultSegmentRow
-                                    left={
-                                        <JourneySelectedResultTime expectedStart={expectedStartTime} aimedStart={aimedStartTime} />
-                                    }
-                                    middle={
-                                        <JourneySelectedResultLineTop color={transportPointColors.foot} />
-                                    }
-                                />
-                                <JourneySelectedResultSegmentRow
-                                    middle={
-                                        <JourneySelectedResultLineMiddle color={transportPointColors.foot} />
-                                    }
-                                    right={<>
-                                        <div>
-                                            <WalkIcon />
-                                        </div>
-                                        <div>
-                                            {getWalkDistance(leg.distance)}
-                                        </div>
-                                    </>}
-                                />
-                                <JourneySelectedResultSegmentRow
-                                    left={
-                                        <JourneySelectedResultTime expectedStart={expectedEndTime} aimedStart={aimedEndTime} />
-                                    }
-                                    middle={
-                                        <JourneySelectedResultLineBottom color={transportPointColors.foot} />
-                                    }
-                                />
-                            </>
+                            <JourneyPlannerSelectedResultWalk leg={leg} />
                         );
                     } else {
-                        const fromEstimatedCall = leg.fromEstimatedCall;
-
-                        const expectedDepartureTime = new Date(fromEstimatedCall.expectedDepartureTime);
-                        const aimedDepartureTime = new Date(fromEstimatedCall.aimedDepartureTime);
-
-                        const toEstimatedCall = leg.toEstimatedCall;
-
-                        const expectedArrivalTime = new Date(toEstimatedCall.expectedArrivalTime);
-                        const aimedArrivalTime = new Date(toEstimatedCall.aimedArrivalTime);
-
                         content = (
-                            <>
-                                <JourneySelectedResultSegmentRow
-                                    left={
-                                        <JourneySelectedResultTime expectedStart={expectedDepartureTime} aimedStart={aimedDepartureTime} />
-                                    }
-                                    middle={
-                                        <JourneySelectedResultLineTop color={`#${leg.serviceJourney.line.presentation.colour}`} />
-                                    }
-                                    right={
-                                        <div>
-                                            {fromEstimatedCall.quay.name}
-                                        </div>
-                                    }
-                                />
-                                <JourneySelectedResultSegmentRow
-                                    middle={
-                                        <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
-                                    }
-                                    right={
-                                        <div className='journey_planner_selected_result_segment_row_right_info'>
-                                            <TransportIdLabeled
-                                                transportColor={`#${leg.serviceJourney.line.presentation.colour}`}
-                                                transportType={leg.serviceJourney.line.transportMode}
-                                                transportNumber={leg.serviceJourney.line.publicCode}
-                                                label={leg.fromEstimatedCall.destinationDisplay.frontText}
-                                            />
-                                        </div>
-                                    }
-                                />
-                                <JourneySelectedResultSegmentRow
-                                    left={
-                                        <JourneySelectedResultTime expectedStart={expectedArrivalTime} aimedStart={aimedArrivalTime} />
-                                    }
-                                    middle={
-                                        <JourneySelectedResultLineBottom color={`#${leg.serviceJourney.line.presentation.colour}`} />
-                                    }
-                                    right={
-                                        <div>
-                                            {toEstimatedCall.quay.name}
-                                        </div>
-                                    }
-                                />
-                            </>
+                            <JourneyPlannerSelectedResultTransport leg={leg} />
                         );
                     }
 

@@ -23,7 +23,7 @@
 
 
 
-*:not(svg, path, defs, mask, circle, rect, g, text, tspan) {
+*:not(svg, path, defs, mask, circle, rect, g, text, tspan, .leaflet-container, .leaflet-container *) {
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     color: var(--main-col);
 }
