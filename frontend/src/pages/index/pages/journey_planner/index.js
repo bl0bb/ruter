@@ -8,13 +8,13 @@ import polyline from '@mapbox/polyline';
 
 import React, { createContext, useContext, useEffect, useRef, useState, Fragment } from 'react';
 
-import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon } from '../../../../svg';
+import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon, Walk } from '../../../../svg';
 
 const journeyPlannerContext = createContext();
 const formDataContext = createContext();
 
 const transportPointColors = {
-    foot: 'var(--main-bg-col)',
+    foot: 'var(--main-bg-light-col-2)',
     bus: 'rgb(118, 163, 0)',
     coach: 'rgb(118, 163, 0)',
     rail: 'rgb(0, 48, 135)',
@@ -1230,117 +1230,175 @@ function JourneySelectedResultSegmentRow({ left, middle, right }) {
     );
 }
 
+const journeySelectedResultLineThickness = 8;
+const halfJourneySelectedResultLineThickness = journeySelectedResultLineThickness * 0.5;
+
+function JourneySelectedResultLine({ side, top, bottom, color }) {
+    return (
+        <div className='journey_planner_selected_result_line_container'>
+            <div className={`journey_planner_selected_result_line journey_planner_selected_result_line_${side}`} style={{
+                '--journey-planner-selected-result-line-top': top,
+                '--journey-planner-selected-result-line-bottom': bottom,
+                '--journey-planner-selected-result-line-color': color,
+                '--journey-planner-selected-result-line-thickness': `${journeySelectedResultLineThickness}px`,
+                '--journey-planner-selected-result-line-half-thickness': `${halfJourneySelectedResultLineThickness}px`,
+            }}>
+
+            </div>
+        </div>
+    );
+}
+
+function JourneySelectedResultLineTop({ color }) {
+    return (
+        <JourneySelectedResultLine side='top' top='0%' bottom='0%' color={color} />
+    );
+}
+
+function JourneySelectedResultLineMiddle({ color }) {
+    return (
+        <JourneySelectedResultLine side='middle' top='0%' bottom='0%' color={color} />
+    );
+}
+
+function JourneySelectedResultLineBottom({ color }) {
+    return (
+        <JourneySelectedResultLine side='bottom' top='0%' bottom='0%' color={color} />
+    );
+}
+
+function JourneySelectedResultTime({ expectedStart, aimedStart }) {
+    return (
+        <div className='journey_planner_planner_selected_result_time'>
+            <div className='journey_planner_planner_selected_result_time_expected'>
+                {getHourMinDate(expectedStart)}
+            </div>
+            {expectedStart.valueOf() !== aimedStart.valueOf() ? (
+                <div className='journey_planner_planner_selected_result_time_aimed'>
+                    {getHourMinDate(aimedStart)}
+                </div>
+            ) : undefined}
+        </div>
+    )
+}
+
 function JourneySelectedResult({ result, selectedResult }) {
     const selectedJourney = result?.data.trip.tripPatterns[selectedResult];
     return (
-        <div id='journey_planner_selected_result_segments'>
-            {selectedJourney?.legs.map((leg, index) => {
-                const mode = leg.mode;
+        <div id='journey_planner_planner_selected_result'>
+            <div id='journey_planner_selected_result_segments'>
+                {selectedJourney?.legs.map((leg, index) => {
+                    const mode = leg.mode;
 
-                let content;
+                    let content;
 
-                if (mode === 'foot') {
-                    content = (
-                        <JourneySelectedResultSegmentRow
-                            middle={
-                                <div>
-                                    ⚪
-                                </div>
-                            }
-                            right={<>
-                                <div>
-                                    🚶
-                                </div>
-                                <div>
-                                    {getWalkDistance(leg.distance)}
-                                </div>
-                            </>}
-                        />
-                    );
-                } else {
-                    const fromEstimatedCall = leg.fromEstimatedCall;
-                    const fromExpectedDepartureTime = new Date(fromEstimatedCall.expectedDepartureTime);
-                    const fromAimedDepartureTime = new Date(fromEstimatedCall.aimedDepartureTime);
+                    console.log(leg)
 
-                    const toEstimatedCall = leg.toEstimatedCall;
-                    const toExpectedDepartureTime = new Date(toEstimatedCall.expectedDepartureTime);
-                    const toAimedDepartureTime = new Date(toEstimatedCall.aimedDepartureTime);
+                    if (mode === 'foot') {
+                        const expectedStartTime = new Date(leg.expectedStartTime);
+                        const aimedStartTime = new Date(leg.aimedStartTime);
 
-                    content = (
-                        <>
-                            <JourneySelectedResultSegmentRow
-                                left={
-                                    <div>
+                        const expectedEndTime = new Date(leg.expectedEndTime);
+                        const aimedEndTime = new Date(leg.aimedEndTime);
+
+                        content = (
+                            <>
+                                <JourneySelectedResultSegmentRow
+                                    left={
+                                        <JourneySelectedResultTime expectedStart={expectedStartTime} aimedStart={aimedStartTime} />
+                                    }
+                                    middle={
+                                        <JourneySelectedResultLineTop color={transportPointColors.foot} />
+                                    }
+                                />
+                                <JourneySelectedResultSegmentRow
+                                    middle={
+                                        <JourneySelectedResultLineMiddle color={transportPointColors.foot} />
+                                    }
+                                    right={<>
                                         <div>
-                                            {getHourMinDate(fromExpectedDepartureTime)}
+                                            <WalkIcon />
                                         </div>
-                                        {fromExpectedDepartureTime.valueOf() !== fromAimedDepartureTime.valueOf() ? (
-                                            <div>
-                                                {getHourMinDate(fromAimedDepartureTime)}
-                                            </div>
-                                        ) : undefined}
-                                    </div>
-                                }
-                                middle={
-                                    <div>
-                                        🟢
-                                    </div>
-                                }
-                                right={
-                                    <div>
-                                        {fromEstimatedCall.quay.name}
-                                    </div>
-                                }
-                            />
-                            <JourneySelectedResultSegmentRow
-                                middle={
-                                    <div>
-                                        🟢
-                                    </div>
-                                }
-                                right={
-                                    <TransportIdLabeled
-                                        transportColor={`#${leg.serviceJourney.line.presentation.colour}`}
-                                        transportType={leg.serviceJourney.line.transportMode}
-                                        transportNumber={leg.serviceJourney.line.publicCode}
-                                        label={leg.fromEstimatedCall.destinationDisplay.frontText}
-                                    />
-                                }
-                            />
-                            <JourneySelectedResultSegmentRow
-                                left={
-                                    <div>
                                         <div>
-                                            {getHourMinDate(toExpectedDepartureTime)}
+                                            {getWalkDistance(leg.distance)}
                                         </div>
-                                        {toExpectedDepartureTime.valueOf() !== toAimedDepartureTime.valueOf() ? (
-                                            <div>
-                                                {getHourMinDate(toAimedDepartureTime)}
-                                            </div>
-                                        ) : undefined}
-                                    </div>
-                                }
-                                middle={
-                                    <div>
-                                        🟢
-                                    </div>
-                                }
-                                right={
-                                    <div>
-                                        {toEstimatedCall.quay.name}
-                                    </div>
-                                }
-                            />
-                        </>
-                    );
-                }
+                                    </>}
+                                />
+                                <JourneySelectedResultSegmentRow
+                                    left={
+                                        <JourneySelectedResultTime expectedStart={expectedEndTime} aimedStart={aimedEndTime} />
+                                    }
+                                    middle={
+                                        <JourneySelectedResultLineBottom color={transportPointColors.foot} />
+                                    }
+                                />
+                            </>
+                        );
+                    } else {
+                        const fromEstimatedCall = leg.fromEstimatedCall;
 
-                return (
-                    <div key={index} className='journey_planner_selected_result_segment'>
-                        {content}
-                    </div>
-                );
-            })}
+                        const expectedDepartureTime = new Date(fromEstimatedCall.expectedDepartureTime);
+                        const aimedDepartureTime = new Date(fromEstimatedCall.aimedDepartureTime);
+
+                        const toEstimatedCall = leg.toEstimatedCall;
+
+                        const expectedArrivalTime = new Date(toEstimatedCall.expectedArrivalTime);
+                        const aimedArrivalTime = new Date(toEstimatedCall.aimedArrivalTime);
+
+                        content = (
+                            <>
+                                <JourneySelectedResultSegmentRow
+                                    left={
+                                        <JourneySelectedResultTime expectedStart={expectedDepartureTime} aimedStart={aimedDepartureTime} />
+                                    }
+                                    middle={
+                                        <JourneySelectedResultLineTop color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                    }
+                                    right={
+                                        <div>
+                                            {fromEstimatedCall.quay.name}
+                                        </div>
+                                    }
+                                />
+                                <JourneySelectedResultSegmentRow
+                                    middle={
+                                        <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                    }
+                                    right={
+                                        <div className='journey_planner_selected_result_segment_row_right_info'>
+                                            <TransportIdLabeled
+                                                transportColor={`#${leg.serviceJourney.line.presentation.colour}`}
+                                                transportType={leg.serviceJourney.line.transportMode}
+                                                transportNumber={leg.serviceJourney.line.publicCode}
+                                                label={leg.fromEstimatedCall.destinationDisplay.frontText}
+                                            />
+                                        </div>
+                                    }
+                                />
+                                <JourneySelectedResultSegmentRow
+                                    left={
+                                        <JourneySelectedResultTime expectedStart={expectedArrivalTime} aimedStart={aimedArrivalTime} />
+                                    }
+                                    middle={
+                                        <JourneySelectedResultLineBottom color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                    }
+                                    right={
+                                        <div>
+                                            {toEstimatedCall.quay.name}
+                                        </div>
+                                    }
+                                />
+                            </>
+                        );
+                    }
+
+                    return (
+                        <div key={index} className='journey_planner_selected_result_segment'>
+                            {content}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }

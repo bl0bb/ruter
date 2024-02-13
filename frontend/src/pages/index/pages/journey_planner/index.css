@@ -11,7 +11,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 500px;
+    max-width: 450px;
     width: 100%;
     height: 100%;
     flex-shrink: 0;
@@ -23,7 +23,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 400px;
+    max-width: 350px;
     width: 100%;
     height: 100%;
     flex-shrink: 0;
@@ -50,7 +50,7 @@
     justify-content: center;
     padding: 16px;
     line-height: 16px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .journey_planner_form_display_select_button.journey_planner_form_display_select_button_selected {
@@ -99,7 +99,7 @@
 
 .journey_planner_form_place_input_label {
     width: 60px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .journey_planner_form_place_input_container {
@@ -202,9 +202,7 @@
     gap: 4px;
 }
 
-.journey_planner_form_place_input_suggestion_name {
-
-}
+.journey_planner_form_place_input_suggestion_name {}
 
 .journey_planner_form_place_input_suggestion_location {
     color: var(--main-sub-col-1);
@@ -256,17 +254,15 @@
 }
 
 .journey_planner_result_top_info_time {
-    line-height: 20px;
-    font-size: 20px;
-    font-weight: 600;
+    line-height: 18px;
+    font-size: 18px;
+    font-weight: 500;
 }
 
-.journey_planner_result_top_info_expected_time {
-    
-}
+.journey_planner_result_top_info_expected_time {}
 
 .journey_planner_result_top_info_aimed_time {
-    color: rgb(255, 166, 0);
+    color: var(--delay-col);
 }
 
 .journey_planner_result_top_info_expected_duration {
@@ -280,9 +276,7 @@
     gap: 8px;
 }
 
-.journey_planner_result_content_info_segment {
-
-}
+.journey_planner_result_content_info_segment {}
 
 .journey_planner_result_content_info_arrow {
     display: flex;
@@ -295,7 +289,7 @@
 /* for departures */
 .journey_planner_departure_platform {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 
@@ -329,7 +323,7 @@
     border-radius: 8px;
     box-sizing: border-box;
     background-color: var(--main-bg-light-col-1);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 
@@ -359,7 +353,7 @@
 
 .transport_id_number {
     line-height: 16px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 
@@ -372,8 +366,9 @@
 }
 
 .transport_id_labeled_label {
-    font-weight: 600;
-    font-size: 18px;
+    line-height: 16px;
+    font-weight: 500;
+    font-size: 16px;
 }
 
 
@@ -381,7 +376,7 @@
 
 .walk_transport_id_distance {
     line-height: 16px;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 
@@ -424,11 +419,22 @@
 
 
 
+#journey_planner_planner_selected_result {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow: hidden auto;
+}
+
+
 
 #journey_planner_selected_result_segments {
     display: flex;
     flex-direction: column;
     gap: 32px;
+    width: 100%;
 }
 
 
@@ -454,7 +460,7 @@
 
 
 .journey_planner_selected_result_segment_row_left {
-    width: 60px;
+    width: 40px;
     flex-shrink: 0;
 }
 
@@ -469,6 +475,65 @@
 
 
 
+
+
+.journey_planner_selected_result_segment_row_right_info {
+    padding: 16px 0;
+}
+
+
+
+
+.journey_planner_planner_selected_result_time {
+    display: flex;
+    flex-direction: column;
+}
+
+.journey_planner_planner_selected_result_time_expected {
+    width: 100%;
+    font-weight: 500;
+}
+
+.journey_planner_planner_selected_result_time_aimed {
+    width: 100%;
+    font-weight: 500;
+    color: var(--delay-col);
+}
+
+
+
+
+
+
+.journey_planner_selected_result_line_container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+.journey_planner_selected_result_line {
+    --journey-planner-selected-result-line-border-radius: calc(var(--journey-planner-selected-result-line-thickness) * 0.5);
+    position: absolute;
+    top: var(--journey-planner-selected-result-line-top);
+    bottom: var(--journey-planner-selected-result-line-bottom);
+    left: calc(50% - (var(--journey-planner-selected-result-line-thickness) * 0.5));
+    width: var(--journey-planner-selected-result-line-thickness);
+    background-color: var(--journey-planner-selected-result-line-color);
+}
+
+.journey_planner_selected_result_line.journey_planner_selected_result_line_top {
+    border-radius: var(--journey-planner-selected-result-line-border-radius) var(--journey-planner-selected-result-line-border-radius) 0 0;
+}
+
+.journey_planner_selected_result_line.journey_planner_selected_result_line_middle {
+    border-radius: 0;
+}
+
+.journey_planner_selected_result_line.journey_planner_selected_result_line_bottom {
+    border-radius: 0 0 var(--journey-planner-selected-result-line-border-radius) var(--journey-planner-selected-result-line-border-radius);
+}
 
 
 
