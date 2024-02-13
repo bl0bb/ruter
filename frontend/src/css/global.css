@@ -116,3 +116,26 @@ button {
     vertical-align: middle;
     color: rgb(0, 147, 255);
 }
+
+
+
+
+
+
+
+
+
+
+.fancy_input {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    background-color: var(--main-bg-dark-col-1);
+    overflow: hidden;
+}
+
+
+.fancy_input:not(.fancy_input_no_border_radius) {
+    border-radius: 8px;
+}

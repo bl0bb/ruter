@@ -8,7 +8,7 @@ import polyline from '@mapbox/polyline';
 
 import React, { createContext, useContext, useEffect, useRef, useState, Fragment } from 'react';
 
-import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon, Walk } from '../../../../svg';
+import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon, BlockShuffle as BlockShuffleIcon, Calendar as CalendarIcon, Clock as ClockIcon, SimpleArrowRight as SimpleArrowRightIcon, SimpleArrowLeft as SimpleArrowLeftIcon } from '../../../../svg';
 
 const journeyPlannerContext = createContext();
 const formDataContext = createContext();
@@ -45,38 +45,26 @@ const transportationCategories = {
     'ferryStop': 'boat_stop',
 };
 
-const locationIcons = {
-    'street': PointPinIcon,
-    'restaurant': () => <div>🧑‍🍳</div>,
-    'poi': () => <div>🌱</div>,
-    'places': () => <div>🏠</div>,
-    'town': () => <div>🏠🏠🏠</div>,
-    'attraction': () => <div>🎡</div>,
-    'theatre': () => <div>🎭</div>,
-    'cinema': () => <div>🎥</div>,
-    'busStation': () => <div>🚌</div>,
-    'airport': () => <div>🛫</div>,
-    'hotel': () => <div>🏨</div>,
-};
-
-const locationCategories = {
-    'street': 'street',
-    'restaurant': 'restaurant',
-    'poi': 'poi',
-    'GroupOfStopPlaces': 'places',
-    'tettsted': 'town',
-    'theatre': 'theatre',
-    'cinema': 'cinema',
-    'attraction': 'attraction',
-    'busStation': 'busStation',
-    'airport': 'airport',
-    'hotel': 'hotel',
-};
 
 
 
 
 
+
+
+function clamp(num, min, max) {
+    return Math.min(Math.max(num, min), max);
+}
+
+
+
+function addPlural(num) {
+    if (num === 1) {
+        return '';
+    } else {
+        return 's';
+    }
+}
 
 
 
@@ -95,6 +83,44 @@ function fillEmptyDate(num) {
 
 function getHourMinDate(date) {
     return `${fillEmptyDate(date.getHours())}:${fillEmptyDate(date.getMinutes())}`
+}
+
+function validateHourMinDate(date) {
+    let hoursStr;
+    let minutesStr;
+
+    if (date.includes(':')) {
+        [hoursStr, minutesStr] = date.split(':');
+    } else {
+        hoursStr = date.substring(0, 2);
+        minutesStr = date.substring(2, 4);
+    }
+
+    const fix = (str, isLeft) => {
+        if (str.length === 0) {
+            return '00';
+        } else if (str.length === 1) {
+            return isLeft ? `${str}0` : `0${str}`;
+        } else if (str.length > 2) {
+            return str.substring(0, 2);
+        }
+        return str;
+    }
+
+    hoursStr = fix(hoursStr, false);
+    minutesStr = fix(minutesStr, true);
+
+    let hours = parseInt(hoursStr);
+    let minutes = parseInt(minutesStr);
+
+    hours = clamp(hours, 0, 23);
+    minutes = clamp(minutes, 0, 59);
+
+    return [hours, minutes];
+}
+
+function validateDate(date) {
+    //TODO: make this!!!!!!!!
 }
 
 function getReadableHourMinDate(ms) {
@@ -120,10 +146,15 @@ function getReadableHourMinDate(ms) {
     }
 
     if (durationString === '') {
-        durationString = '< 0m';
+        durationString = '< 1m';
     }
 
     return durationString;
+}
+
+
+function getDate(date) {
+    return `${fillEmptyDate(date.getDate())}.${fillEmptyDate(date.getMonth() + 1)}.${date.getFullYear()}`
 }
 
 
@@ -133,10 +164,14 @@ function RailPlatformIcon({ platform }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 30" width="26" height="30" preserveAspectRatio="xMidYMid">
             <g transform="translate(3,0)">
-                <rect x="-3" y="0" style="visibility: hidden" fill="#59C5FC" width="26" height="26" rx="13" ry="13"></rect>
+                <rect x="-3" y="0" style={{
+                    visibility: 'hidden',
+                }} fill="#59C5FC" width="26" height="26" rx="13" ry="13"></rect>
                 <rect x="-1" y="2" fill="white" width="22" height="22" rx="12" ry="12"></rect>
                 <g transform="translate(10,13)">
-                    <rect style="visibility: hidden" transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
+                    <rect style={{
+                        visibility: 'hidden',
+                    }} transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
                     <rect transform="rotate(45)" fill="white" width="11" height="11"></rect>
                     <rect transform="rotate(45)" fill="#252525" width="10" height="10"></rect>
                 </g>
@@ -158,10 +193,14 @@ function BusPlatformIcon({ platform }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 30" width="26" height="30" preserveAspectRatio="xMidYMid">
             <g transform="translate(3,0)">
-                <rect x="-3" y="0" style="visibility: hidden" fill="#59C5FC" width="26" height="26" rx="13" ry="13"></rect>
+                <rect x="-3" y="0" style={{
+                    visibility: 'hidden',
+                }} fill="#59C5FC" width="26" height="26" rx="13" ry="13"></rect>
                 <rect x="-1" y="2" fill="#252525" width="22" height="22" rx="12" ry="12"></rect>
                 <g transform="translate(10,13)">
-                    <rect style="visibility: hidden" transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
+                    <rect style={{
+                    visibility: 'hidden',
+                }} transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
                     <rect transform="rotate(45)" fill="#252525" width="11" height="11"></rect>
                     <rect transform="rotate(45)" fill="#252525" width="10" height="10"></rect>
                 </g>
@@ -365,7 +404,7 @@ function JourneyPlannerPlaceInput({ name, label, icons, searchInput, setSearchIn
                 {label}
             </label>
             <div ref={selectRef} className='journey_planner_form_place_input_container'>
-                <div className={`journey_planner_form_place_input_main${displaySuggestions ? ' journey_planner_form_place_input_main_focused' : ''}`}>
+                <div className={`journey_planner_form_place_input_main fancy_input fancy_input_no_border_radius${displaySuggestions ? ' journey_planner_form_place_input_main_focused' : ''}`}>
                     <input type='text' autoComplete='off' name={name} placeholder='Place, address, area' className='journey_planner_form_place_input_input_field' value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
                     <div className='journey_planner_form_place_input_icons'>
                         {icons?.map((icon, index) => {
@@ -985,10 +1024,11 @@ function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedRe
 
 //journey
 function PlansContainer({ children }) {
-    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
 
-    //TODO: use V3 instead of V2
     const fetchNewPlans = (setPlans, body) => {
+        setIsResultsLoading(true);
+        //TODO: use V3 instead of V2
         fetch('https://api.entur.io/journey-planner/v2/graphql', {
             method: 'POST',
             headers: {
@@ -997,6 +1037,7 @@ function PlansContainer({ children }) {
             },
             body: body,
         }).then((res) => {
+            setIsResultsLoading(false);
             if (res.ok) {
                 res.json().then((data) => {
                     if (data.errors) {
@@ -1122,7 +1163,7 @@ function JourneyPlannerForm() {
 
     return (
         <form id='journey_planner_planner_form'>
-            <h2 id='journey_planner_form_title'>
+            <h2 className='journey_planner_form_title'>
                 Where do you want to go?
             </h2>
             <div id='journey_planner_planner_form_place_inputs'>
@@ -1367,27 +1408,75 @@ function JourneyPlannerSelectedResultTransport({ leg }) {
                     </div>
                 }
             />
-            <JourneySelectedResultSegmentRow
-                middle={
-                    <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
-                }
-                right={
-                    leg.intermediateEstimatedCalls.length > 0 ? (
-                        <button className='journey_planner_selected_result_segment_row_right_stops' onClick={() => {
-                            setShowStops(showStops === false);
-                        }}>
-                            <div className='journey_planner_selected_result_segment_row_right_stops_icon' style={{
-                                '--journey-planner-selected-result-segment-row-right-stops-icon-color': `#${leg.serviceJourney.line.presentation.colour}`,
-                            }}>
+            {leg.intermediateEstimatedCalls.length > 0 ? (
+                <>
+                    <JourneySelectedResultSegmentRow
+                        middle={
+                            <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                        }
+                        right={
+                            leg.intermediateEstimatedCalls.length > 0 ? (
+                                <button className='journey_planner_selected_result_segment_row_right_stops' onClick={() => {
+                                    setShowStops(showStops === false);
+                                }}>
+                                    <div className='journey_planner_selected_result_segment_row_right_stops_icon' style={{
+                                        '--journey-planner-selected-result-segment-row-right-stops-icon-color': `#${leg.serviceJourney.line.presentation.colour}`,
+                                    }}>
 
-                            </div>
-                            <div className='journey_planner_selected_result_segment_row_right_stops_stops'>
-                                {leg.intermediateEstimatedCalls.length} stops
-                            </div>
-                        </button>
-                    ) : undefined
-                }
-            />
+                                    </div>
+                                    <div className='journey_planner_selected_result_segment_row_right_stops_stops'>
+                                        {leg.intermediateEstimatedCalls.length} stop{addPlural(leg.intermediateEstimatedCalls.length)}
+                                    </div>
+                                </button>
+                            ) : undefined
+                        }
+                    />
+                    {showStops ? (
+                        <>
+                            <JourneySelectedResultSegmentRow
+                                middle={
+                                    <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                }
+                                right={
+                                    <div className='journey_planner_selected_result_segment_row_intermediate_stops_space'>
+
+                                    </div>
+                                }
+                            />
+                            {leg.intermediateEstimatedCalls.map((stop, index) => {
+                                return (
+                                    <JourneySelectedResultSegmentRow
+                                        key={index}
+                                        left={
+                                            <div className='journey_planner_selected_result_segment_row_intermediate_stop_time'>
+                                                {getHourMinDate(new Date(stop.expectedArrivalTime))}
+                                            </div>
+                                        }
+                                        middle={
+                                            <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                        }
+                                        right={
+                                            <div className='journey_planner_selected_result_segment_row_intermediate_stop_quay'>
+                                                {stop.quay.name}
+                                            </div>
+                                        }
+                                    />
+                                );
+                            })}
+                            <JourneySelectedResultSegmentRow
+                                middle={
+                                    <JourneySelectedResultLineMiddle color={`#${leg.serviceJourney.line.presentation.colour}`} />
+                                }
+                                right={
+                                    <div className='journey_planner_selected_result_segment_row_intermediate_stops_space'>
+
+                                    </div>
+                                }
+                            />
+                        </>
+                    ) : undefined}
+                </>
+            ) : undefined}
             <JourneySelectedResultSegmentRow
                 left={
                     <JourneySelectedResultTime expectedStart={expectedArrivalTime} aimedStart={aimedArrivalTime} />
@@ -1414,8 +1503,6 @@ function JourneySelectedResult({ result, selectedResult }) {
                     const mode = leg.mode;
 
                     let content;
-
-                    console.log(leg)
 
                     if (mode === 'foot') {
                         content = (
@@ -1564,9 +1651,10 @@ function JourneyPlannerMap() {
 
 //departures
 function DeparturesContainer({ children }) {
-    const { selectedForm, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
 
     const fetchNewDepartures = (setPlans, body) => {
+        setIsResultsLoading(true);
         fetch('https://api.entur.io/journey-planner/v3/graphql', {
             method: 'POST',
             headers: {
@@ -1575,6 +1663,7 @@ function DeparturesContainer({ children }) {
             },
             body: body,
         }).then((res) => {
+            setIsResultsLoading(false);
             if (res.ok) {
                 res.json().then((data) => {
                     if (data.errors) {
@@ -1667,7 +1756,7 @@ function DeparturesContainer({ children }) {
                 checkDoneLoading();
             });
         }
-    }, []);
+    }, [selectedResults[selectedForm]]);
 
     return (
         <formDataContext.Provider value={{ formData: departuresFormData }}>
@@ -1681,7 +1770,7 @@ function DeparturesForm() {
 
     return (
         <form id='journey_planner_planner_form'>
-            <h2 id='journey_planner_form_title'>
+            <h2 className='journey_planner_form_title'>
                 Where do you want to travel from?
             </h2>
             <JourneyPlannerPlaceInput name='from' label='From' icons={[BusIcon, TrainIcon]} searchInput={formData.planData.from.input} setSearchInput={(value) => formData.setPlanData((prev) => {
@@ -1784,7 +1873,6 @@ function DeparturesSelectedResult({ result, selectedResult }) {
 }
 
 function DeparturesMap() {
-    const { formData } = useContext(formDataContext);
     const { results, selectedForm, selectedResults } = useContext(journeyPlannerContext)
 
     const [mapData, setMapData] = useState({
@@ -1838,7 +1926,7 @@ function DeparturesMap() {
         }
 
         setMapData(newMapData);
-    }, [selectedResults[selectedForm], curResults]);
+    }, [selectedResults[selectedForm], curResults, map]);
 
     return (
         <>
@@ -1884,8 +1972,22 @@ function JourneyPlannerSelectedResult() {
     );
 }
 
+function JourneyPlannerFormTimeTypeButton({ children, buttonTimeType }) {
+    const { timeType, setTimeType } = useContext(journeyPlannerContext);
+    return (
+        <button className={`journey_planner_form_time_type_button${timeType === buttonTimeType ? ' journey_planner_form_time_type_button_selected' : ''}`} onClick={() => {
+            setTimeType(buttonTimeType);
+        }}>
+            {children}
+        </button>
+    );
+}
+
 function JourneyPlanner() {
-    const { selectedForm, setSelectedForm, forms, curForm } = useContext(journeyPlannerContext);
+    const { selectedForm, setSelectedForm, forms, curForm, timeInput, setTimeInput } = useContext(journeyPlannerContext);
+
+    const [dateTextInput, setDateTextInput] = useState(getDate(timeInput));
+    const [timeTextInput, setTimeTextInput] = useState(getHourMinDate(timeInput));
 
     return (
         <div id='journey_planner_planner_form_display'>
@@ -1899,16 +2001,66 @@ function JourneyPlanner() {
                 })}
             </div>
             <div id='journey_planner_planner_form_container'>
-                {React.createElement(curForm.form)}
+                <div id='journey_planner_planner_form_main'>
+                    {React.createElement(curForm.form)}
+                </div>
+                <div id='journey_planner_planner_form_time'>
+                    <h2 className='journey_planner_form_title'>
+                        When do you want to travel?
+                    </h2>
+                    <div id='journey_planner_form_time_content'>
+                        <div id='journey_planner_form_time_type_buttons'>
+                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'now'}>
+                                Now
+                            </JourneyPlannerFormTimeTypeButton>
+                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'departure'}>
+                                Departure
+                            </JourneyPlannerFormTimeTypeButton>
+                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'arrival'}>
+                                Arrival
+                            </JourneyPlannerFormTimeTypeButton>
+                        </div>
+                        <div id='journey_planner_form_time_inputs'>
+                            <div id='journey_planner_form_time_inputs_date' className='journey_planner_form_time_input_container fancy_input'>
+                                <input id='journey_planner_form_time_inputs_date_text' className='journey_planner_form_time_input_input' value={dateTextInput} onChange={(e) => {
+                                    setDateTextInput(e.target.value);
+                                }} onBlur={() => {
+
+                                }} />
+                                <div className='journey_planner_form_time_input_icon'>
+                                    <CalendarIcon />
+                                </div>
+                            </div>
+                            <div id='journey_planner_form_time_inputs_time' className='journey_planner_form_time_input_container fancy_input'>
+                                <input id='journey_planner_form_time_inputs_time_text' className='journey_planner_form_time_input_input' value={timeTextInput} onChange={(e) => {
+                                    setTimeTextInput(e.target.value);
+                                }} onBlur={() => {
+                                    const newDate = new Date(timeInput.valueOf());
+                                    const [hours, minutes] = validateHourMinDate(timeTextInput);
+                                    newDate.setHours(hours);
+                                    newDate.setMinutes(minutes);
+                                    setTimeInput(newDate);
+                                    setTimeTextInput(getHourMinDate(newDate));
+                                }} />
+                                <div className='journey_planner_form_time_input_icon'>
+                                    <ClockIcon />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
 export default function Index() {
-    //TODO: append initial values as stuff retrieved from url too lazy to do it rn
     const [selectedForm, setSelectedForm] = useState('journey_planner');
     const [isURLLoaded, setIsURLLoaded] = useState(false);
+    const [isResultsLoading, setIsResultsLoading] = useState(false);
+
+    const [timeInput, setTimeInput] = useState(new Date());
+    const [timeType, setTimeType] = useState('now');
 
     const [inputs, setInputs] = useState({
         journey_planner: {
@@ -2036,20 +2188,37 @@ export default function Index() {
                 setInputs: setInputs,
                 selectedResults: selectedResults,
                 setSelectedResults: setSelectedResults,
+                isResultsLoading: isResultsLoading,
+                setIsResultsLoading: setIsResultsLoading,
+                timeInput: timeInput,
+                setTimeInput: setTimeInput,
+                timeType: timeType,
+                setTimeType: setTimeType,
             }}>
                 {React.createElement(curForm.container, {}, (
                     <>
                         <div id='journey_planner_planner'>
                             <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} />
                             <div id='journey_planner_results_container'>
-                                <div id='journey_planner_results'>
-                                    <JourneyPlannerResults selectedForm={selectedForm} forms={forms} />
-                                </div>
+                                {isResultsLoading ? (
+                                    <div id='journey_planner_results_loading'>
+                                        <BlockShuffleIcon />
+                                        <div id='journey_planner_results_loading_text'>
+                                            Cooking up journey
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div id='journey_planner_results'>
+                                        <JourneyPlannerResults selectedForm={selectedForm} forms={forms} />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <div id='journey_planner_selected_result'>
-                            <JourneyPlannerSelectedResult />
-                        </div>
+                        {results[selectedForm] ? (
+                            <div id='journey_planner_selected_result'>
+                                <JourneyPlannerSelectedResult />
+                            </div>
+                        ) : undefined}
                         <div id='journey_planner_content'>
                             <div id='journey_planner_content_map_container'>
                                 <MapContainer id='journey_planner_content_map' center={mapCenter} zoom={11} scrollWheelZoom={true}>

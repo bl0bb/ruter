@@ -63,28 +63,114 @@
 #journey_planner_planner_form_container {
     position: relative;
     display: flex;
+    flex-direction: column;
+    gap: 20px;
     width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 1;
     background-color: var(--main-bg-light-col-1);
     box-shadow: var(--main-box-shadow-1);
-    z-index: 1;
+}
+
+#journey_planner_planner_form_main {
+    
 }
 
 #journey_planner_planner_form {
     display: flex;
     flex-direction: column;
-    padding: 20px;
     width: 100%;
     box-sizing: border-box;
 }
 
-#journey_planner_form_title {
+.journey_planner_form_title {
     margin: 0 0 20px 0;
+    font-size: 20px;
 }
 
 #journey_planner_planner_form_place_inputs {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+
+
+
+#journey_planner_planner_form_time {
+
+}
+
+#journey_planner_form_title {
+
+}
+
+#journey_planner_form_time_content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#journey_planner_form_time_type_buttons {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    background-color: var(--main-bg-dark-col-1);
+    overflow: hidden;
+}
+
+.journey_planner_form_time_type_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    flex-grow: 1;
+    flex-basis: 100%;
+    border-radius: 8px;
+    text-align: center;
+    line-height: 16px;
+}
+
+.journey_planner_form_time_type_button.journey_planner_form_time_type_button_selected {
+    background-color: var(--main-bg-light-col-2);
+    box-shadow: var(--main-box-shadow-1);
+}
+
+#journey_planner_form_time_inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 36px;
+}
+
+.journey_planner_form_time_input_container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.journey_planner_form_time_input_input {
+    all: unset;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    flex-grow: 1;
+}
+
+.journey_planner_form_time_input_icon {
+    display: flex;
+    align-items: center;
+}
+
+#journey_planner_form_time_inputs_date {
+    flex-basis: calc(100% / 1.5);
+}
+
+#journey_planner_form_time_inputs_time {
+    flex-basis: calc(100% / 3);
 }
 
 
@@ -103,7 +189,6 @@
 }
 
 .journey_planner_form_place_input_container {
-    --journey-planner-form-place-input-border: 1px solid var(--main-bg-light-col-2);
     --journey-planner-form-place-input-input-field-pad: 12px;
     position: relative;
     display: flex;
@@ -112,13 +197,7 @@
 }
 
 .journey_planner_form_place_input_main {
-    display: flex;
-    align-items: center;
-    position: relative;
-    width: 100%;
-    border: var(--journey-planner-form-place-input-border);
-    background-color: var(--main-bg-dark-col-1);
-    overflow: hidden;
+    
 }
 
 .journey_planner_form_place_input_main:not(.journey_planner_form_place_input_main_focused) {
@@ -156,9 +235,6 @@
     width: 100%;
     z-index: 1;
     background-color: var(--main-bg-dark-col-1);
-    border-left: var(--journey-planner-form-place-input-border);
-    border-right: var(--journey-planner-form-place-input-border);
-    border-bottom: var(--journey-planner-form-place-input-border);
     box-shadow: var(--main-box-shadow-1);
     border-radius: 0 0 8px 8px;
     box-sizing: border-box;
@@ -222,6 +298,21 @@
     flex-grow: 1;
     overflow: hidden scroll;
 }
+
+
+
+#journey_planner_results_loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+}
+
+#journey_planner_results_loading_text {
+    font-weight: 500;
+}
+
+
 
 
 #journey_planner_results {
@@ -501,8 +592,23 @@
     background-color: rgba(255, 255, 255);
 }
 
-.journey_planner_selected_result_segment_row_right_stops_stops {}
 
+
+.journey_planner_selected_result_segment_row_intermediate_stops_space {
+    height: 16px;
+}
+
+
+
+
+
+.journey_planner_selected_result_segment_row_intermediate_stop_time {
+    color: var(--main-sub-col-1);
+}
+
+.journey_planner_selected_result_segment_row_intermediate_stop_quay {
+    color: var(--main-sub-col-1);
+}
 
 
 
