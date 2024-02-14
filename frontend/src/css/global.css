@@ -2,7 +2,7 @@
     --main-bg-col: rgb(31, 37, 44);
 
     --main-bg-light-col-1: rgb(36, 43, 51);
-    --main-bg-light-col-2: rgb(42, 51, 60);
+    --main-bg-light-col-2: rgb(39, 49, 59);
     --main-bg-light-col-3: rgb(48, 58, 69);
 
     --main-bg-dark-col-1: rgb(28, 33, 39);
@@ -11,6 +11,7 @@
     --main-col: rgb(255, 255, 255);
 
     --main-sub-col-1: rgb(200, 200, 200);
+    --main-sub-col-2: rgb(71, 86, 102);
 
     --main-box-shadow-1: 0px 2px 8px 0px rgba(0, 0, 0, 0.2);
 

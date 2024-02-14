@@ -8,10 +8,11 @@ import polyline from '@mapbox/polyline';
 
 import React, { createContext, useContext, useEffect, useRef, useState, Fragment } from 'react';
 
-import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon, BlockShuffle as BlockShuffleIcon, Calendar as CalendarIcon, Clock as ClockIcon, SimpleArrowRight as SimpleArrowRightIcon, SimpleArrowLeft as SimpleArrowLeftIcon } from '../../../../svg';
+import { Bus as BusIcon, Train as TrainIcon, PointPin as PointPinIcon, Tram as TramIcon, Subway as SubwayIcon, Boat as BoatIcon, Walk as WalkIcon, ArrowRight as ArrowRightIcon, BlockShuffle as BlockShuffleIcon, Calendar as CalendarIcon, Clock as ClockIcon, SimpleArrowRight as SimpleArrowRightIcon, Map as MapIcon, TriangleArrowLeft as TriangleArrowLeftIcon, ArrowLeft as ArrowLeftIcon } from '../../../../svg';
 
 const journeyPlannerContext = createContext();
 const formDataContext = createContext();
+const displayContext = createContext();
 
 const transportPointColors = {
     foot: 'var(--main-bg-light-col-2)',
@@ -113,6 +114,14 @@ function validateHourMinDate(date) {
     let hours = parseInt(hoursStr);
     let minutes = parseInt(minutesStr);
 
+    if (isNaN(hours)) {
+        hours = 0;
+    }
+
+    if (isNaN(minutes)) {
+        minutes = 0;
+    }
+
     hours = clamp(hours, 0, 23);
     minutes = clamp(minutes, 0, 59);
 
@@ -120,7 +129,7 @@ function validateHourMinDate(date) {
 }
 
 function validateDate(date) {
-    //TODO: make this!!!!!!!!
+    //TODO: fix this
 }
 
 function getReadableHourMinDate(ms) {
@@ -142,6 +151,12 @@ function getReadableHourMinDate(ms) {
         durationString += hours + 'h ';
     }
     if (minutes > 0) {
+        //skibidi toilet
+        //rizz was here
+        //gyatt toilet
+        //jeg hater oransje hvit tekst i en linje i en linje i en linje i en linje. skibidi toilet 
+        //kai cent
+        //gyatt toilet
         durationString += minutes + 'm';
     }
 
@@ -199,8 +214,8 @@ function BusPlatformIcon({ platform }) {
                 <rect x="-1" y="2" fill="#252525" width="22" height="22" rx="12" ry="12"></rect>
                 <g transform="translate(10,13)">
                     <rect style={{
-                    visibility: 'hidden',
-                }} transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
+                        visibility: 'hidden',
+                    }} transform="rotate(45)" fill="#59C5FC" width="13" height="13"></rect>
                     <rect transform="rotate(45)" fill="#252525" width="11" height="11"></rect>
                     <rect transform="rotate(45)" fill="#252525" width="10" height="10"></rect>
                 </g>
@@ -360,6 +375,8 @@ function JourneyPlannerPlaceInput({ name, label, icons, searchInput, setSearchIn
             } else {
                 console.warn('Failed to fetch suggestions', res);
             }
+        }).catch((err) => {
+            console.warn('Failed to fetch suggestions', err);
         });
 
         return () => {
@@ -978,13 +995,14 @@ function generatePlansQuery(from, to) {
     };
 }
 
-function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedResults, fetchResults, generateQuery) {
+function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedResult, fetchResults, generateQuery) {
     const { updateUrl, isURLLoaded } = useContext(journeyPlannerContext);
 
     const [curPlanQuery, setCurPlanQuery] = useState();
     const [plans, setPlans] = useState();
 
     const fetchNewPlans = () => {
+        setSelectedResult(0);
         fetchResults(setPlans, JSON.stringify(curPlanQuery));
     }
 
@@ -1024,7 +1042,7 @@ function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedRe
 
 //journey
 function PlansContainer({ children }) {
-    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults, setDisplayResults } = useContext(journeyPlannerContext);
 
     const fetchNewPlans = (setPlans, body) => {
         setIsResultsLoading(true);
@@ -1051,8 +1069,16 @@ function PlansContainer({ children }) {
                             [selectedForm]: data,
                         };
                     });
+                    setDisplayResults((prev) => {
+                        return {
+                            ...prev,
+                            [selectedForm]: true,
+                        };
+                    });
                 });
             }
+        }).catch((err) => {
+            console.error(err);
         });
     }
 
@@ -1097,6 +1123,8 @@ function PlansContainer({ children }) {
                         cb(place);
                     });
                 }
+            }).catch((err) => {
+                console.error(err);
             });
         }
 
@@ -1206,20 +1234,21 @@ function JourneyPlannerForm() {
     );
 }
 
-function JourneyResults({ results }) {
+function JourneyResults({ onResultClicked, results }) {
     const { selectedForm, setSelectedResults } = useContext(journeyPlannerContext);
 
     return results?.data.trip.tripPatterns.map((journey, index) => {
         const startTime = new Date(journey.startTime);
         const endTime = new Date(journey.endTime);
         return (
-            <button key={index} className='journey_planner_result' onClick={() => {
+            <button key={index} className='journey_planner_result' onClick={(e) => {
                 setSelectedResults((prev) => {
                     return {
                         ...prev,
                         [selectedForm]: index,
                     };
                 });
+                onResultClicked(e, journey, index);
             }}>
                 <div className='journey_planner_result_top_info'>
                     <div className='journey_planner_result_top_info_expected_time journey_planner_result_top_info_time'>
@@ -1549,7 +1578,7 @@ function JourneyPlannerMap() {
         let startPoint;
         let endPoint;
 
-        if (curResults?.data !== undefined) {
+        if (curResults?.data !== undefined && curResults.data.trip.tripPatterns.length !== 0) {
             const trip = curResults.data.trip.tripPatterns[selectedResults[selectedForm]];
             trip.legs.forEach(leg => {
                 const mode = leg.mode;
@@ -1651,7 +1680,7 @@ function JourneyPlannerMap() {
 
 //departures
 function DeparturesContainer({ children }) {
-    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults, setDisplayResults } = useContext(journeyPlannerContext);
 
     const fetchNewDepartures = (setPlans, body) => {
         setIsResultsLoading(true);
@@ -1677,8 +1706,18 @@ function DeparturesContainer({ children }) {
                             [selectedForm]: data,
                         };
                     });
+                    /*
+                    setDisplayResults((prev) => {
+                        return {
+                            ...prev,
+                            [selectedForm]: true,
+                        };
+                    });
+                    */
                 });
             }
+        }).catch((err) => {
+            console.warn('Departures error.', err);
         });
     }
 
@@ -1722,6 +1761,8 @@ function DeparturesContainer({ children }) {
                         cb(place);
                     });
                 }
+            }).catch((err) => {
+                console.error(err);
             });
         }
 
@@ -1794,10 +1835,10 @@ function DeparturesForm() {
     );
 }
 
-function DeparturesResults({ results }) {
+function DeparturesResults({ onResultClicked, results }) {
     const { selectedForm, setSelectedResults } = useContext(journeyPlannerContext);
 
-    return results?.data.stopPlace?.quays.filter((quay) => quay.publicCode !== null && quay.publicCode !== '').map((quay, index) => {
+    return results?.data.stopPlace?.quays.map((quay, index) => {
         const calls = [];
         for (let i = 0; i < quay.estimatedCalls.length; i++) {
             const curCall = quay.estimatedCalls[i];
@@ -1812,6 +1853,13 @@ function DeparturesResults({ results }) {
             found.calls.push(curCall);
         }
 
+        let quayName;
+        if (quay.publicCode || quay.description) {
+            quayName = `Plattform${quay.publicCode ? ` ${quay.publicCode}` : ''}${quay.description ? ` ${quay.description}` : ''}`;
+        } else {
+            quayName = quay.name;
+        }
+
         return (
             <button key={index} className='journey_planner_result' onClick={(e) => {
                 setSelectedResults((prev) => {
@@ -1820,9 +1868,10 @@ function DeparturesResults({ results }) {
                         [selectedForm]: index,
                     };
                 });
+                onResultClicked(e, quay, index);
             }}>
                 <div className='journey_planner_departure_platform'>
-                    Plattform{quay.publicCode ? ` ${quay.publicCode}` : ''}{quay.description ? ` ${quay.description}` : ''}
+                    {quayName}
                 </div>
                 <div className='journey_planner_departure_lines'>
                     {calls.map((call, index) => {
@@ -1949,12 +1998,13 @@ function DeparturesMap() {
 
 
 //bbop
-function JourneyPlannerResults() {
+function JourneyPlannerResults({ onResultClicked }) {
     const { selectedForm, forms, results } = useContext(journeyPlannerContext);
     return (
         <>
             {React.createElement(forms[selectedForm].results, {
                 results: results[selectedForm],
+                onResultClicked: onResultClicked,
             })}
         </>
     );
@@ -2025,7 +2075,28 @@ function JourneyPlanner() {
                                 <input id='journey_planner_form_time_inputs_date_text' className='journey_planner_form_time_input_input' value={dateTextInput} onChange={(e) => {
                                     setDateTextInput(e.target.value);
                                 }} onBlur={() => {
+                                    const newDate = new Date(timeInput.valueOf());
+                                    //const [day, month, year] = validateDate(dateTextInput);
 
+                                    const [dayStr, monthStr, yearStr] = dateTextInput.split('.');
+                                    let day = parseInt(dayStr);
+                                    let month = parseInt(monthStr);
+                                    let year = parseInt(yearStr);
+                                    if (isNaN(day)) {
+                                        day = newDate.getDate();
+                                    }
+                                    if (isNaN(month)) {
+                                        month = newDate.getMonth() + 1;
+                                    }
+                                    if (isNaN(year)) {
+                                        year = newDate.getFullYear();
+                                    }
+
+                                    newDate.setDate(day);
+                                    newDate.setMonth(month - 1);
+                                    newDate.setFullYear(year);
+                                    setTimeInput(newDate);
+                                    setDateTextInput(getDate(newDate));
                                 }} />
                                 <div className='journey_planner_form_time_input_icon'>
                                     <CalendarIcon />
@@ -2054,7 +2125,138 @@ function JourneyPlanner() {
     );
 }
 
+function JourneyPlannerMobileHudButton({ children, ...props }) {
+    return (
+        <button className='journey_planner_mobile_hud_button' {...props}>
+            {children}
+        </button>
+    );
+}
+
+function JourneyPlannerMobileHud({ left, right }) {
+    return (
+        <div className='journey_planner_mobile_hud_container'>
+            <div className='journey_planner_mobile_hud_left'>
+                {left}
+            </div>
+            <div className='journey_planner_mobile_hud_right'>
+                {right}
+            </div>
+        </div>
+    );
+}
+
+function JourneyPlannerPlannerSection({ onResultClicked }) {
+    const { selectedForm, setSelectedForm, forms, isResultsLoading } = useContext(journeyPlannerContext);
+    return (
+        <div id='journey_planner_planner'>
+            <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} />
+            <div id='journey_planner_results_container'>
+                {isResultsLoading ? (
+                    <div id='journey_planner_results_loading'>
+                        <BlockShuffleIcon />
+                        <div id='journey_planner_results_loading_text'>
+                            Cooking up journey
+                        </div>
+                    </div>
+                ) : (
+                    <div id='journey_planner_results'>
+                        <JourneyPlannerResults onResultClicked={onResultClicked} />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function JourneyPlannerSelectedResultSection() {
+    const { selectedForm, displayResults } = useContext(journeyPlannerContext);
+    const { displayType, setCurPage } = useContext(displayContext);
+    return displayResults[selectedForm] ? (
+        <>
+            <div id='journey_planner_selected_result'>
+                <JourneyPlannerSelectedResult />
+            </div>
+            {displayType === 'mobile' ? (
+                <JourneyPlannerMobileHud left={
+                    <JourneyPlannerMobileHudButton onClick={() => setCurPage('planner')}>
+                        <ArrowLeftIcon />
+                    </JourneyPlannerMobileHudButton>
+                } right={
+                    <JourneyPlannerMobileHudButton onClick={() => setCurPage('content')}>
+                        <MapIcon />
+                    </JourneyPlannerMobileHudButton>
+                } />
+            ) : undefined}
+        </>
+    ) : undefined;
+}
+
+function JourneyPlannerContentSection() {
+    const { curForm, mapCenter } = useContext(journeyPlannerContext);
+    const { displayType, setCurPage } = useContext(displayContext);
+    return (
+        <>
+            <div id='journey_planner_content'>
+                <div id='journey_planner_content_map_container'>
+                    <MapContainer id='journey_planner_content_map' center={mapCenter} zoom={11} scrollWheelZoom={true}>
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
+                        {React.createElement(curForm.map)}
+                    </MapContainer>
+                </div>
+            </div>
+            {displayType === 'mobile' ? (
+                <JourneyPlannerMobileHud left={
+                    <JourneyPlannerMobileHudButton onClick={() => setCurPage('result')}>
+                        <ArrowLeftIcon />
+                    </JourneyPlannerMobileHudButton>
+                } />
+            ) : undefined}
+        </>
+    );
+}
+
+function JourneyPlannerDisplayDesktop() {
+    const { curForm } = useContext(journeyPlannerContext);
+    return React.createElement(curForm.container, {}, (
+        <displayContext.Provider value={{
+            displayType: 'desktop',
+        }}>
+            <JourneyPlannerPlannerSection />
+            <JourneyPlannerSelectedResultSection />
+            <JourneyPlannerContentSection />
+        </displayContext.Provider>
+    ));
+}
+
+function JourneyPlannerDisplayMobile() {
+    const { curForm } = useContext(journeyPlannerContext);
+    const [curPage, setCurPage] = useState('planner');
+    return React.createElement(curForm.container, {}, (
+        <displayContext.Provider value={{
+            displayType: 'mobile',
+            curPage,
+            setCurPage,
+        }}>
+            {curPage === 'planner' ? (
+                <JourneyPlannerPlannerSection onResultClicked={() => {
+                    setCurPage('result');
+                }} />
+            ) : curPage === 'result' ? (
+                <JourneyPlannerSelectedResultSection />
+            ) : curPage === 'content' ? (
+                <JourneyPlannerContentSection />
+            ) : undefined}
+        </displayContext.Provider>
+    ));
+}
+
 export default function Index() {
+    const [displayType, setDisplayType] = useState('desktop');
+
     const [selectedForm, setSelectedForm] = useState('journey_planner');
     const [isURLLoaded, setIsURLLoaded] = useState(false);
     const [isResultsLoading, setIsResultsLoading] = useState(false);
@@ -2076,6 +2278,11 @@ export default function Index() {
                 input: '',
             },
         },
+    });
+
+    const [displayResults, setDisplayResults] = useState({
+        journey_planner: false,
+        departures: false,
     });
 
     const [selectedResults, setSelectedResults] = useState({
@@ -2114,6 +2321,28 @@ export default function Index() {
     const fetchInterval = useRef();
 
     const [mapCenter, setMapCenter] = useState([59.9139, 10.7522]);
+
+    useEffect(() => {
+        const resizeHandler = () => {
+            if (window.innerWidth < 768) {
+                if (displayType !== 'mobile') {
+                    setDisplayType('mobile');
+                }
+            } else {
+                if (displayType !== 'desktop') {
+                    setDisplayType('desktop');
+                }
+            }
+        }
+
+        resizeHandler();
+
+        window.addEventListener('resize', resizeHandler);
+
+        return () => {
+            window.removeEventListener('resize', resizeHandler);
+        }
+    });
 
 
     /*
@@ -2172,6 +2401,10 @@ export default function Index() {
 
     const curForm = forms[selectedForm];
 
+
+
+
+
     return (
         <div id='journey_planner'>
             <journeyPlannerContext.Provider value={{
@@ -2194,44 +2427,17 @@ export default function Index() {
                 setTimeInput: setTimeInput,
                 timeType: timeType,
                 setTimeType: setTimeType,
+                displayResults: displayResults,
+                setDisplayResults: setDisplayResults,
+                mapCenter: mapCenter,
+                setMapCenter: setMapCenter,
+                displayType: displayType,
             }}>
-                {React.createElement(curForm.container, {}, (
-                    <>
-                        <div id='journey_planner_planner'>
-                            <JourneyPlanner selectedForm={selectedForm} setSelectedForm={setSelectedForm} forms={forms} />
-                            <div id='journey_planner_results_container'>
-                                {isResultsLoading ? (
-                                    <div id='journey_planner_results_loading'>
-                                        <BlockShuffleIcon />
-                                        <div id='journey_planner_results_loading_text'>
-                                            Cooking up journey
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div id='journey_planner_results'>
-                                        <JourneyPlannerResults selectedForm={selectedForm} forms={forms} />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        {results[selectedForm] ? (
-                            <div id='journey_planner_selected_result'>
-                                <JourneyPlannerSelectedResult />
-                            </div>
-                        ) : undefined}
-                        <div id='journey_planner_content'>
-                            <div id='journey_planner_content_map_container'>
-                                <MapContainer id='journey_planner_content_map' center={mapCenter} zoom={11} scrollWheelZoom={true}>
-                                    <TileLayer
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                    />
-                                    {React.createElement(curForm.map)}
-                                </MapContainer>
-                            </div>
-                        </div>
-                    </>
-                ))}
+                {displayType === 'desktop' ? (
+                    <JourneyPlannerDisplayDesktop />
+                ) : displayType === 'mobile' ? (
+                    <JourneyPlannerDisplayMobile />
+                ) : undefined}
             </journeyPlannerContext.Provider>
         </div>
     );
