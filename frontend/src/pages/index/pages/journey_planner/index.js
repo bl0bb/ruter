@@ -722,7 +722,7 @@ function generateDeparturesQuery(stopPlace) {
     };
 }
 
-function generatePlansQuery(from, to) {
+function generatePlansQuery(from, to, date) {
     return {
         operationName: 'trips',
         query: `query trips($from: Location!, $to: Location!, $dateTime: DateTime!, $arriveBy: Boolean!, $preferred: InputPreferred, $modes: [Mode], $minimumTransferTime: Int, $banned: InputBanned, $whiteListed: InputWhiteListed, $transportSubmodes: [TransportSubmodeFilter], $numTripPatterns: Int = 8, $walkSpeed: Float = 1.3, $walkReluctance: Float = 4.0) {
@@ -976,7 +976,7 @@ function generatePlansQuery(from, to) {
                     "latitude": to.geometry.coordinates[1]
                 }
             },
-            "dateTime": new Date().toISOString(),
+            "dateTime": date.toISOString(),
             "arriveBy": false,
             "modes": [
                 "coach",
@@ -996,7 +996,7 @@ function generatePlansQuery(from, to) {
 }
 
 function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedResult, fetchResults, generateQuery) {
-    const { updateUrl, isURLLoaded } = useContext(journeyPlannerContext);
+    const { updateUrl, isURLLoaded, timeInput } = useContext(journeyPlannerContext);
 
     const [curPlanQuery, setCurPlanQuery] = useState();
     const [plans, setPlans] = useState();
@@ -1015,7 +1015,7 @@ function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedRe
             return;
         }
         setCurPlanQuery(generateQuery(planData));
-    }, [...Object.values(planData).map((plan) => plan.location), isURLLoaded]);
+    }, [...Object.values(planData).map((plan) => plan.location), isURLLoaded, timeInput]);
 
     useEffect(() => {
         if (curPlanQuery === undefined) {
@@ -1042,7 +1042,7 @@ function usePlannerFormData(planData, setPlanData, selectedResult, setSelectedRe
 
 //journey
 function PlansContainer({ children }) {
-    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults, setDisplayResults } = useContext(journeyPlannerContext);
+    const { selectedForm, setIsResultsLoading, setResults, setIsURLLoaded, inputs, setInputs, selectedResults, setSelectedResults, setDisplayResults, timeInput } = useContext(journeyPlannerContext);
 
     const fetchNewPlans = (setPlans, body) => {
         setIsResultsLoading(true);
@@ -1083,7 +1083,7 @@ function PlansContainer({ children }) {
     }
 
     const generatePlansQueryFromData = (planData) => {
-        return generatePlansQuery(planData.from.location, planData.to.location);
+        return generatePlansQuery(planData.from.location, planData.to.location, timeInput);
     }
 
     const plansFormData = usePlannerFormData(inputs[selectedForm], (value) => {
@@ -2022,11 +2022,14 @@ function JourneyPlannerSelectedResult() {
     );
 }
 
-function JourneyPlannerFormTimeTypeButton({ children, buttonTimeType }) {
+function JourneyPlannerFormTimeTypeButton({ children, buttonTimeType, onButtonClick }) {
     const { timeType, setTimeType } = useContext(journeyPlannerContext);
     return (
-        <button className={`journey_planner_form_time_type_button${timeType === buttonTimeType ? ' journey_planner_form_time_type_button_selected' : ''}`} onClick={() => {
+        <button className={`journey_planner_form_time_type_button${timeType === buttonTimeType ? ' journey_planner_form_time_type_button_selected' : ''}`} onClick={(e) => {
             setTimeType(buttonTimeType);
+            if (onButtonClick) {
+                onButtonClick(e);
+            }
         }}>
             {children}
         </button>
@@ -2034,10 +2037,15 @@ function JourneyPlannerFormTimeTypeButton({ children, buttonTimeType }) {
 }
 
 function JourneyPlanner() {
-    const { selectedForm, setSelectedForm, forms, curForm, timeInput, setTimeInput } = useContext(journeyPlannerContext);
+    const { selectedForm, setSelectedForm, forms, curForm, timeInput, setTimeInput, timeType, setTimeType } = useContext(journeyPlannerContext);
 
     const [dateTextInput, setDateTextInput] = useState(getDate(timeInput));
     const [timeTextInput, setTimeTextInput] = useState(getHourMinDate(timeInput));
+
+    useEffect(() => {
+        setDateTextInput(getDate(timeInput));
+        setTimeTextInput(getHourMinDate(timeInput));
+    }, [timeInput]);
 
     return (
         <div id='journey_planner_planner_form_display'>
@@ -2054,72 +2062,76 @@ function JourneyPlanner() {
                 <div id='journey_planner_planner_form_main'>
                     {React.createElement(curForm.form)}
                 </div>
-                <div id='journey_planner_planner_form_time'>
-                    <h2 className='journey_planner_form_title'>
-                        When do you want to travel?
-                    </h2>
-                    <div id='journey_planner_form_time_content'>
-                        <div id='journey_planner_form_time_type_buttons'>
-                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'now'}>
-                                Now
-                            </JourneyPlannerFormTimeTypeButton>
-                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'departure'}>
-                                Departure
-                            </JourneyPlannerFormTimeTypeButton>
-                            <JourneyPlannerFormTimeTypeButton buttonTimeType={'arrival'}>
-                                Arrival
-                            </JourneyPlannerFormTimeTypeButton>
-                        </div>
-                        <div id='journey_planner_form_time_inputs'>
-                            <div id='journey_planner_form_time_inputs_date' className='journey_planner_form_time_input_container fancy_input'>
-                                <input id='journey_planner_form_time_inputs_date_text' className='journey_planner_form_time_input_input' value={dateTextInput} onChange={(e) => {
-                                    setDateTextInput(e.target.value);
-                                }} onBlur={() => {
-                                    const newDate = new Date(timeInput.valueOf());
-                                    //const [day, month, year] = validateDate(dateTextInput);
-
-                                    const [dayStr, monthStr, yearStr] = dateTextInput.split('.');
-                                    let day = parseInt(dayStr);
-                                    let month = parseInt(monthStr);
-                                    let year = parseInt(yearStr);
-                                    if (isNaN(day)) {
-                                        day = newDate.getDate();
-                                    }
-                                    if (isNaN(month)) {
-                                        month = newDate.getMonth() + 1;
-                                    }
-                                    if (isNaN(year)) {
-                                        year = newDate.getFullYear();
-                                    }
-
-                                    newDate.setDate(day);
-                                    newDate.setMonth(month - 1);
-                                    newDate.setFullYear(year);
-                                    setTimeInput(newDate);
-                                    setDateTextInput(getDate(newDate));
-                                }} />
-                                <div className='journey_planner_form_time_input_icon'>
-                                    <CalendarIcon />
-                                </div>
+                {selectedForm === 'journey_planner' ? (
+                    <div id='journey_planner_planner_form_time'>
+                        <h2 className='journey_planner_form_title'>
+                            When do you want to travel?
+                        </h2>
+                        <div id='journey_planner_form_time_content'>
+                            <div id='journey_planner_form_time_type_buttons'>
+                                <JourneyPlannerFormTimeTypeButton buttonTimeType={'now'} onButtonClick={() => {
+                                    setTimeInput(new Date());
+                                }}>
+                                    Now
+                                </JourneyPlannerFormTimeTypeButton>
+                                <JourneyPlannerFormTimeTypeButton buttonTimeType={'departure'}>
+                                    Departure
+                                </JourneyPlannerFormTimeTypeButton>
+                                <JourneyPlannerFormTimeTypeButton buttonTimeType={'arrival'}>
+                                    Arrival
+                                </JourneyPlannerFormTimeTypeButton>
                             </div>
-                            <div id='journey_planner_form_time_inputs_time' className='journey_planner_form_time_input_container fancy_input'>
-                                <input id='journey_planner_form_time_inputs_time_text' className='journey_planner_form_time_input_input' value={timeTextInput} onChange={(e) => {
-                                    setTimeTextInput(e.target.value);
-                                }} onBlur={() => {
-                                    const newDate = new Date(timeInput.valueOf());
-                                    const [hours, minutes] = validateHourMinDate(timeTextInput);
-                                    newDate.setHours(hours);
-                                    newDate.setMinutes(minutes);
-                                    setTimeInput(newDate);
-                                    setTimeTextInput(getHourMinDate(newDate));
-                                }} />
-                                <div className='journey_planner_form_time_input_icon'>
-                                    <ClockIcon />
+                            <div id='journey_planner_form_time_inputs'>
+                                <div id='journey_planner_form_time_inputs_date' className='journey_planner_form_time_input_container fancy_input'>
+                                    <input id='journey_planner_form_time_inputs_date_text' className='journey_planner_form_time_input_input' value={dateTextInput} onChange={(e) => {
+                                        setDateTextInput(e.target.value);
+                                    }} onBlur={() => {
+                                        const newDate = new Date(timeInput.valueOf());
+                                        //const [day, month, year] = validateDate(dateTextInput);
+
+                                        const [dayStr, monthStr, yearStr] = dateTextInput.split('.');
+                                        let day = parseInt(dayStr);
+                                        let month = parseInt(monthStr);
+                                        let year = parseInt(yearStr);
+                                        if (isNaN(day)) {
+                                            day = newDate.getDate();
+                                        }
+                                        if (isNaN(month)) {
+                                            month = newDate.getMonth() + 1;
+                                        }
+                                        if (isNaN(year)) {
+                                            year = newDate.getFullYear();
+                                        }
+
+                                        newDate.setDate(day);
+                                        newDate.setMonth(month - 1);
+                                        newDate.setFullYear(year);
+                                        setTimeInput(newDate);
+                                        setDateTextInput(getDate(newDate));
+                                    }} />
+                                    <div className='journey_planner_form_time_input_icon'>
+                                        <CalendarIcon />
+                                    </div>
+                                </div>
+                                <div id='journey_planner_form_time_inputs_time' className='journey_planner_form_time_input_container fancy_input'>
+                                    <input id='journey_planner_form_time_inputs_time_text' className='journey_planner_form_time_input_input' value={timeTextInput} onChange={(e) => {
+                                        setTimeTextInput(e.target.value);
+                                    }} onBlur={() => {
+                                        const newDate = new Date(timeInput.valueOf());
+                                        const [hours, minutes] = validateHourMinDate(timeTextInput);
+                                        newDate.setHours(hours);
+                                        newDate.setMinutes(minutes);
+                                        setTimeInput(newDate);
+                                        setTimeTextInput(getHourMinDate(newDate));
+                                    }} />
+                                    <div className='journey_planner_form_time_input_icon'>
+                                        <ClockIcon />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                ) : undefined}
             </div>
         </div>
     );
@@ -2343,6 +2355,21 @@ export default function Index() {
             window.removeEventListener('resize', resizeHandler);
         }
     });
+
+
+    useEffect(() => {
+        const now = new Date();
+        const isDiff = now.getFullYear() !== timeInput.getFullYear() || now.getMonth() !== timeInput.getMonth() || now.getDate() !== timeInput.getDate() || now.getHours() !== timeInput.getHours() || now.getMinutes() !== timeInput.getMinutes();
+        if (timeType === 'now') {
+            if (isDiff) {
+                setTimeType('departure');
+            }
+        } else {
+            if (isDiff === false) {
+                setTimeType('now');
+            }
+        }
+    }, [timeInput]);
 
 
     /*
