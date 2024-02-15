@@ -52,6 +52,23 @@ function checkValueFull(val, type) {
     return true;
 }
 
+
+
+
+function checkValueWithFallback(val, type, fallback) {
+    const isValid = checkValueFull(val, type);
+    if (isValid === true) {
+        return val;
+    }
+    return fallback;
+}
+
+
+
+
+
+
+
 function checkRequestValuePresent(res, val, index) {
     if (val === undefined) {
         res.status(400).send(JSON.stringify({
@@ -108,6 +125,531 @@ function checkRequestValueFull(res, val, index, type) {
 
 
 
+function generateDeparturesQuery(numberOfDepartures, numberOfDeparturesPerLineAndDestinationDisplay, numberOfSubsequentEstimatedCalls, stopPlace) {
+    return {
+        operationName: 'departures',
+        query: `query departures($id: String!, $whiteListed: InputWhiteListed, $numberOfDepartures: Int = 500, $numberOfDeparturesPerLineAndDestinationDisplay: Int = 10, $numberOfSubsequentEstimatedCalls: Int = 5) {
+            stopPlace(id: $id) {
+              ...stopPlaceWithQuaysWithDeparturesFragment
+              __typename
+            }
+          }
+          
+          fragment serviceJourneyFragment on ServiceJourney {
+            id
+            privateCode
+            line {
+              ...lineFragment
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            wheelchairAccessible
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            __typename
+          }
+          
+          fragment estimatedCallFragment on EstimatedCall {
+            quay {
+              id
+              __typename
+            }
+            aimedArrivalTime
+            expectedArrivalTime
+            actualArrivalTime
+            aimedDepartureTime
+            expectedDepartureTime
+            actualDepartureTime
+            realtime
+            forBoarding
+            forAlighting
+            cancellation
+            date
+            destinationDisplay {
+              frontText
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            __typename
+          }
+          
+          fragment estimatedCallWithServiceJourneyFragment on EstimatedCall {
+            ...estimatedCallFragment
+            serviceJourney {
+              ...serviceJourneyFragment
+              __typename
+            }
+            __typename
+          }
+          
+          fragment lineFragment on Line {
+            id
+            publicCode
+            transportMode
+            presentation {
+              colour
+              textColour
+              __typename
+            }
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            authority {
+              id
+              name
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            __typename
+          }
+          
+          fragment quayFragment on Quay {
+            id
+            name
+            latitude
+            longitude
+            description
+            publicCode
+            wheelchairAccessible
+            stopPlace {
+              id
+              description
+              transportMode
+              tariffZones {
+                ...tariffZoneFragment
+                __typename
+              }
+              parent {
+                id
+                description
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          
+          fragment quayWithDeparturesFragment on Quay {
+            ...quayFragment
+            estimatedCalls(timeRange: 14400, whiteListed: $whiteListed, numberOfDepartures: $numberOfDepartures, numberOfDeparturesPerLineAndDestinationDisplay: $numberOfDeparturesPerLineAndDestinationDisplay, omitNonBoarding: true) {
+              ...estimatedCallWithServiceJourneyFragment
+              __typename
+            }
+            subsequentEstimatedCalls: estimatedCalls(timeRange: 14400, whiteListed: $whiteListed, numberOfDepartures: 500, numberOfDeparturesPerLineAndDestinationDisplay: $numberOfSubsequentEstimatedCalls, omitNonBoarding: true) {
+                aimedDepartureTime
+              expectedDepartureTime
+              realtime
+              destinationDisplay {
+                frontText
+                __typename
+              }
+              serviceJourney {
+                id
+                line {
+                  id
+                  publicCode
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            __typename
+          }
+          
+          fragment situationFragment on PtSituationElement {
+            id
+            situationNumber
+            summary {
+              ...multilingualStringFragment
+              __typename
+            }
+            description {
+              ...multilingualStringFragment
+              __typename
+            }
+            advice {
+              ...multilingualStringFragment
+              __typename
+            }
+            lines {
+              id
+              publicCode
+              transportMode
+              __typename
+            }
+            quays {
+              id
+              name
+              stopPlace {
+                id
+                name
+                parent {
+                  id
+                  name
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            stopPlaces {
+              id
+              name
+              __typename
+            }
+            validityPeriod {
+              startTime
+              endTime
+              __typename
+            }
+            infoLinks {
+              uri
+              label
+              __typename
+            }
+            __typename
+          }
+          
+          fragment multilingualStringFragment on MultilingualString {
+            value
+            language
+            __typename
+          }
+          
+          fragment tariffZoneFragment on TariffZone {
+            id
+            name
+            __typename
+          }
+          
+          fragment stopPlaceFragment on StopPlace {
+            id
+            name
+            description
+            latitude
+            longitude
+            transportMode
+            tariffZones {
+              ...tariffZoneFragment
+              __typename
+            }
+            parent {
+              id
+              __typename
+            }
+            __typename
+          }
+          
+          fragment stopPlaceWithQuaysWithDeparturesFragment on StopPlace {
+            ...stopPlaceFragment
+            quays {
+              ...quayWithDeparturesFragment
+              __typename
+            }
+            __typename
+          }`,
+        variables: {
+            "numberOfDepartures": numberOfDepartures,
+            "numberOfDeparturesPerLineAndDestinationDisplay": numberOfDeparturesPerLineAndDestinationDisplay,
+            "numberOfSubsequentEstimatedCalls": numberOfSubsequentEstimatedCalls,
+            "id": stopPlace.properties.id,
+        },
+    };
+}
+
+function generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, date, arriveBy, modes, transportSubmodes, minimumTransferTime, preferred, banned) {
+    return {
+        operationName: 'trips',
+        query: `query trips($from: Location!, $to: Location!, $dateTime: DateTime!, $arriveBy: Boolean!, $preferred: InputPreferred, $modes: [Mode], $minimumTransferTime: Int, $banned: InputBanned, $whiteListed: InputWhiteListed, $transportSubmodes: [TransportSubmodeFilter], $numTripPatterns: Int = 8, $walkSpeed: Float = 1.3, $walkReluctance: Float = 4.0) {
+            trip(from: $from, to: $to, dateTime: $dateTime, arriveBy: $arriveBy, preferred: $preferred, modes: $modes, minimumTransferTime: $minimumTransferTime, banned: $banned, whiteListed: $whiteListed, transportSubmodes: $transportSubmodes, numTripPatterns: $numTripPatterns, walkReluctance: $walkReluctance, walkSpeed: $walkSpeed, transferPenalty: 0, ignoreRealtimeUpdates: true) {
+              tripPatterns {
+                startTime
+                endTime
+                duration
+                legs {
+                  aimedStartTime
+                  expectedStartTime
+                  aimedEndTime
+                  expectedEndTime
+                  mode
+                  realtime
+                  distance
+                  serviceJourney {
+                    ...serviceJourneyFragment
+                    __typename
+                  }
+                  pointsOnLink {
+                    points
+                    __typename
+                  }
+                  fromEstimatedCall {
+                    ...estimatedCallWithQuayFragment
+                    __typename
+                  }
+                  toEstimatedCall {
+                    ...estimatedCallWithQuayFragment
+                    __typename
+                  }
+                  intermediateEstimatedCalls {
+                    ...estimatedCallWithQuayFragment
+                    __typename
+                  }
+                  situations {
+                    ...situationFragment
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+          }
+          
+          fragment serviceJourneyFragment on ServiceJourney {
+            id
+            privateCode
+            line {
+              ...lineFragment
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            wheelchairAccessible
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            __typename
+          }
+          
+          fragment estimatedCallFragment on EstimatedCall {
+            quay {
+              id
+              __typename
+            }
+            aimedArrivalTime
+            expectedArrivalTime
+            actualArrivalTime
+            aimedDepartureTime
+            expectedDepartureTime
+            actualDepartureTime
+            realtime
+            forBoarding
+            forAlighting
+            cancellation
+            date
+            destinationDisplay {
+              frontText
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            __typename
+          }
+          
+          fragment estimatedCallWithQuayFragment on EstimatedCall {
+            ...estimatedCallFragment
+            quay {
+              ...quayFragment
+              __typename
+            }
+            __typename
+          }
+          
+          fragment lineFragment on Line {
+            id
+            publicCode
+            transportMode
+            presentation {
+              colour
+              textColour
+              __typename
+            }
+            notices {
+              id
+              text
+              publicCode
+              __typename
+            }
+            authority {
+              id
+              name
+              __typename
+            }
+            situations {
+              ...situationFragment
+              __typename
+            }
+            __typename
+          }
+          
+          fragment quayFragment on Quay {
+            id
+            name
+            latitude
+            longitude
+            description
+            publicCode
+            wheelchairAccessible
+            stopPlace {
+              id
+              description
+              transportMode
+              tariffZones {
+                ...tariffZoneFragment
+                __typename
+              }
+              parent {
+                id
+                description
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          
+          fragment situationFragment on PtSituationElement {
+            id
+            situationNumber
+            summary {
+              ...multilingualStringFragment
+              __typename
+            }
+            description {
+              ...multilingualStringFragment
+              __typename
+            }
+            advice {
+              ...multilingualStringFragment
+              __typename
+            }
+            lines {
+              id
+              publicCode
+              presentation {
+                colour
+                textColour
+                __typename
+              }
+              transportMode
+              __typename
+            }
+            quays {
+              id
+              name
+              stopPlace {
+                id
+                name
+                parent {
+                  id
+                  name
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            stopPlaces {
+              id
+              name
+              __typename
+            }
+            validityPeriod {
+              startTime
+              endTime
+              __typename
+            }
+            infoLinks {
+              uri
+              label
+              __typename
+            }
+            __typename
+          }
+          
+          fragment multilingualStringFragment on MultilingualString {
+            value
+            language
+            __typename
+          }
+          
+          fragment tariffZoneFragment on TariffZone {
+            id
+            name
+            __typename
+          }
+          `,
+        variables: {
+            "numTripPatterns": numTripPatterns,
+            "walkSpeed": walkSpeed,
+            "walkReluctance": walkReluctance,
+            "from": {
+                "place": `${from.properties.id}`,
+                "coordinates": {
+                    "longitude": from.geometry.coordinates[0],
+                    "latitude": from.geometry.coordinates[1]
+                }
+            },
+            "to": {
+                "place": `${to.properties.id}`,
+                "coordinates": {
+                    "longitude": to.geometry.coordinates[0],
+                    "latitude": to.geometry.coordinates[1]
+                }
+            },
+            "dateTime": dateTime,
+            "arriveBy": arriveBy,
+            "modes": modes,
+            "transportSubmodes": transportSubmodes,
+            "minimumTransferTime": minimumTransferTime,
+            "preferred": preferred,
+            "banned": banned,
+        }
+    };
+}
+
+
 
 
 
@@ -139,7 +681,8 @@ function getAPIURL(url) {
 
 
 const APIURLS = [
-    // getAPIURL('/someapi'),
+    getAPIURL('/journeyplanner'),
+    getAPIURL('/departures'),
 ];
 
 
@@ -212,13 +755,74 @@ app.use((req, res, next) => {
 
 
 
+function isDateISOValid(iso) {
+    const date = new Date(iso);
+    return date.toISOString() === iso;
+}
+
+
 
 
 app.get('/', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-//yap APIer her
+
+
+app.get(getAPIURL('/journeyplanner'), (req, res) => {
+    const body = req.body;
+
+    const from = body.from;
+    if (checkRequestValueFull(res, from, 'from', 'string') === false) return;
+
+    const to = body.to;
+    if (checkRequestValueFull(res, to, 'to', 'string') === false) return;
+
+    const numTripPatterns = checkValueWithFallback(body.numTripPatterns, 'number', 5);
+    const walkSpeed = checkValueWithFallback(body.walkSpeed, 'number', new Date());
+    const walkReluctance = checkValueWithFallback(body.walkReluctance, 'number', new Date());
+    const dateTime = checkValueWithFallback(body.dateTime, (v) => isDateISOValid(), new Date());
+    const arriveBy = checkValueWithFallback(body.arriveBy, 'boolean', false);
+    const modes = checkValueWithFallback(body.modes, 'array', [
+        "coach",
+        "bus",
+        "metro",
+        "tram",
+        "rail",
+        "water",
+        "foot",
+    ]);
+    const transportSubmodes = checkValueWithFallback(body.transportSubmodes, 'array', []);
+    const minimumTransferTime = checkValueWithFallback(body.minimumTransferTime, 'number', 0);
+    // const preferred = checkValueWithFallback(body.preferred, 'date', new Date());
+    // const banned = checkValueWithFallback(body.banned, 'date', new Date());
+
+    fetch('https://api.entur.io/journey-planner/v2/graphql', {
+        method: 'POST',
+        headers: {
+            'ET-Client-Name': 'joe_biden',
+            'Content-Type': 'application/json',
+        },
+        body: generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, date, arriveBy, modes, transportSubmodes, minimumTransferTime/*, preferred, banned*/),
+    }).then((res) => {
+        if (res.ok) {
+            res.json().then((data) => {
+                if (data.errors) {
+                    console.warn('Trip error:\n', data.errors);
+                    return;
+                }
+                res.status(200).send(data);
+            });
+        } else {
+            res.status(500).send('Failed to fetch data');
+        }
+    }).catch((err) => {
+            console.error(err);
+            res.status(500).send();
+        });
+});
+
+
 
 app.get('*', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'build', 'index.html'));
