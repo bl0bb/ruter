@@ -125,7 +125,7 @@ function checkRequestValueFull(res, val, index, type) {
 
 
 
-function generateDeparturesQuery(numberOfDepartures, numberOfDeparturesPerLineAndDestinationDisplay, numberOfSubsequentEstimatedCalls, stopPlace) {
+function generateDeparturesQuery(stopPlace, numberOfDepartures = 500, numberOfDeparturesPerLineAndDestinationDisplay = 1, numberOfSubsequentEstimatedCalls = 6) {
     return {
         operationName: 'departures',
         query: `query departures($id: String!, $whiteListed: InputWhiteListed, $numberOfDepartures: Int = 500, $numberOfDeparturesPerLineAndDestinationDisplay: Int = 10, $numberOfSubsequentEstimatedCalls: Int = 5) {
@@ -379,12 +379,12 @@ function generateDeparturesQuery(numberOfDepartures, numberOfDeparturesPerLineAn
             "numberOfDepartures": numberOfDepartures,
             "numberOfDeparturesPerLineAndDestinationDisplay": numberOfDeparturesPerLineAndDestinationDisplay,
             "numberOfSubsequentEstimatedCalls": numberOfSubsequentEstimatedCalls,
-            "id": stopPlace.properties.id,
+            "id": stopPlace.location.properties.id,
         },
     };
 }
 
-function generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, date, arriveBy, modes, transportSubmodes, minimumTransferTime, preferred, banned) {
+function generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, dateTime, arriveBy, modes, transportSubmodes, minimumTransferTime, preferred, banned) {
     return {
         operationName: 'trips',
         query: `query trips($from: Location!, $to: Location!, $dateTime: DateTime!, $arriveBy: Boolean!, $preferred: InputPreferred, $modes: [Mode], $minimumTransferTime: Int, $banned: InputBanned, $whiteListed: InputWhiteListed, $transportSubmodes: [TransportSubmodeFilter], $numTripPatterns: Int = 8, $walkSpeed: Float = 1.3, $walkReluctance: Float = 4.0) {
@@ -625,17 +625,17 @@ function generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance
             "walkSpeed": walkSpeed,
             "walkReluctance": walkReluctance,
             "from": {
-                "place": `${from.properties.id}`,
+                "place": `${from.location.properties.id}`,
                 "coordinates": {
-                    "longitude": from.geometry.coordinates[0],
-                    "latitude": from.geometry.coordinates[1]
+                    "longitude": from.location.geometry.coordinates[0],
+                    "latitude": from.location.geometry.coordinates[1]
                 }
             },
             "to": {
-                "place": `${to.properties.id}`,
+                "place": `${to.location.properties.id}`,
                 "coordinates": {
-                    "longitude": to.geometry.coordinates[0],
-                    "latitude": to.geometry.coordinates[1]
+                    "longitude": to.location.geometry.coordinates[0],
+                    "latitude": to.location.geometry.coordinates[1]
                 }
             },
             "dateTime": dateTime,
@@ -768,15 +768,27 @@ app.get('/', (req, res) => {
 });
 
 
+function validateLocation(res, str, loc) {
+    if (checkRequestValueFull(res, loc, str, 'object') === false) return;
+    if (checkRequestValueFull(res, loc.location, `${str}.location`, 'object') === false) return;
+    if (checkRequestValueFull(res, loc.location.properties, `${str}.location.properties`, 'object') === false) return false;
+    if (checkRequestValueFull(res, loc.location.properties.id, `${str}.location.properties.id`, 'string') === false) return false;
+    if (checkRequestValueFull(res, loc.location.geometry, `${str}.location.geometry`, 'object') === false) return false;
+    if (checkRequestValueFull(res, loc.location.geometry.coordinates, `${str}.location.geometry.coordinates`, 'array') === false) return false;
+    if (checkRequestValueFull(res, loc.location.geometry.coordinates[0], `${str}.location.geometry.coordinates[0]`, 'number') === false) return false;
+    if (checkRequestValueFull(res, loc.location.geometry.coordinates[1], `${str}.location.geometry.coordinates[1]`, 'number') === false) return false;
+    return true;
+}
 
-app.get(getAPIURL('/journeyplanner'), (req, res) => {
+
+app.post(getAPIURL('/journeyplanner'), (req, res) => {
     const body = req.body;
 
     const from = body.from;
-    if (checkRequestValueFull(res, from, 'from', 'string') === false) return;
+    if (validateLocation(res, 'from', from) === false) return;
 
     const to = body.to;
-    if (checkRequestValueFull(res, to, 'to', 'string') === false) return;
+    if (validateLocation(res, 'to', to) === false) return;
 
     const numTripPatterns = checkValueWithFallback(body.numTripPatterns, 'number', 5);
     const walkSpeed = checkValueWithFallback(body.walkSpeed, 'number', new Date());
@@ -803,10 +815,10 @@ app.get(getAPIURL('/journeyplanner'), (req, res) => {
             'ET-Client-Name': 'joe_biden',
             'Content-Type': 'application/json',
         },
-        body: generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, date, arriveBy, modes, transportSubmodes, minimumTransferTime/*, preferred, banned*/),
-    }).then((res) => {
-        if (res.ok) {
-            res.json().then((data) => {
+        body: generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, dateTime, arriveBy, modes, transportSubmodes, minimumTransferTime/*, preferred, banned*/),
+    }).then((foundRes) => {
+        if (foundRes.ok) {
+            foundRes.json().then((data) => {
                 if (data.errors) {
                     console.warn('Trip error:\n', data.errors);
                     return;
@@ -814,12 +826,50 @@ app.get(getAPIURL('/journeyplanner'), (req, res) => {
                 res.status(200).send(data);
             });
         } else {
-            res.status(500).send('Failed to fetch data');
+            foundRes.text().then((data) => {
+                res.status(500).send(data);
+            });
         }
     }).catch((err) => {
-            console.error(err);
-            res.status(500).send();
-        });
+        console.error(err);
+        res.status(500).send();
+    });
+});
+
+app.post(getAPIURL('/departures'), (req, res) => {
+    const body = req.body;
+
+    const from = body.from;
+    if (validateLocation(res, 'from', from) === false) return;
+
+    console.log("skibidi?")
+
+    fetch('https://api.entur.io/journey-planner/v3/graphql', {
+        method: 'POST',
+        headers: {
+            'ET-Client-Name': 'joe_biden',
+            'Content-Type': 'application/json',
+        },
+        body: generateDeparturesQuery(from),
+    }).then((foundRes) => {
+        if (foundRes.ok) {
+            foundRes.json().then((data) => {
+                if (data.errors) {
+                    console.warn('Departures error:\n', data.errors);
+                    return;
+                }
+                res.status(200).send(data);
+            });
+        } else {
+            foundRes.text().then((data) => {
+                console.warn('Departures fetch error:\n', data);
+                res.status(500).send(data);
+            });
+        }
+    }).catch((err) => {
+        console.error(err);
+        res.status(500).send();
+    });
 });
 
 
