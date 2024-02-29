@@ -2,10 +2,15 @@
 The back end part of the Buter app.
 # Table of contents
 - [Introduction](#introduction)
-- [Socket.io](#socket.io)
-    - [Installation](#install-socket.io)
-- [MongoDB](#mongodb)
-    - [Installation](#install-mongodb)
-    - [Use](#how-to-use-mongodb)
-    - [Connect To MongoDB](#connect-to-mongodb-server)
-    - [MongoDB Commands](#mongodb-commands)
+## Introduction
+To be able to run this project on your computer you first need to download and install [Node.js](https://nodejs.org/en/download/).
+
+To install all the required packages run [`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally) in the project directory:
+
+```sh
+$ npm i
+```
+or
+```sh
+$ npm install
+```
