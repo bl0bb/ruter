@@ -77,3 +77,7 @@ The backend relies on the following dependencies:
 - `cors`: Middleware for enabling CORS (Cross-Origin Resource Sharing).
 - `http`: Core module for creating HTTP servers.
 - `path`: Core module for working with file and directory paths.
+
+## License
+
+This project is licensed under the MIT license.
