@@ -31,6 +31,8 @@ function checkValueType(val, type) {
         bool = typeof (val) !== 'object' || Array.isArray(val) === false;
     } else if (type === 'object') {
         bool = typeof (val) !== 'object' || Array.isArray(val) === true;
+    } else if (typeof (type) === 'function') {
+        bool = type(val);
     } else {
         bool = typeof (val) !== type;
     }
@@ -756,8 +758,12 @@ app.use((req, res, next) => {
 
 
 function isDateISOValid(iso) {
-    const date = new Date(iso);
-    return date.toISOString() === iso;
+    try {
+        const date = new Date(iso);
+        return date.toISOString() === iso;
+    } catch (error) {
+        return false;
+    }
 }
 
 
@@ -791,9 +797,9 @@ app.post(getAPIURL('/journeyplanner'), (req, res) => {
     if (validateLocation(res, 'to', to) === false) return;
 
     const numTripPatterns = checkValueWithFallback(body.numTripPatterns, 'number', 5);
-    const walkSpeed = checkValueWithFallback(body.walkSpeed, 'number', new Date());
-    const walkReluctance = checkValueWithFallback(body.walkReluctance, 'number', new Date());
-    const dateTime = checkValueWithFallback(body.dateTime, (v) => isDateISOValid(), new Date());
+    const walkSpeed = checkValueWithFallback(body.walkSpeed, 'number', 1.3);
+    const walkReluctance = checkValueWithFallback(body.walkReluctance, 'number', 4.0);
+    const dateTime = checkValueWithFallback(body.dateTime, (v) => isDateISOValid(v), new Date());
     const arriveBy = checkValueWithFallback(body.arriveBy, 'boolean', false);
     const modes = checkValueWithFallback(body.modes, 'array', [
         "coach",
@@ -815,12 +821,13 @@ app.post(getAPIURL('/journeyplanner'), (req, res) => {
             'ET-Client-Name': 'joe_biden',
             'Content-Type': 'application/json',
         },
-        body: generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, dateTime, arriveBy, modes, transportSubmodes, minimumTransferTime/*, preferred, banned*/),
+        body: JSON.stringify(generatePlansQuery(from, to, numTripPatterns, walkSpeed, walkReluctance, dateTime, arriveBy, modes, transportSubmodes, minimumTransferTime/*, preferred, banned*/)),
     }).then((foundRes) => {
         if (foundRes.ok) {
             foundRes.json().then((data) => {
                 if (data.errors) {
                     console.warn('Trip error:\n', data.errors);
+                    res.status(500).send(data);
                     return;
                 }
                 res.status(200).send(data);
@@ -842,15 +849,13 @@ app.post(getAPIURL('/departures'), (req, res) => {
     const from = body.from;
     if (validateLocation(res, 'from', from) === false) return;
 
-    console.log("skibidi?")
-
     fetch('https://api.entur.io/journey-planner/v3/graphql', {
         method: 'POST',
         headers: {
             'ET-Client-Name': 'joe_biden',
             'Content-Type': 'application/json',
         },
-        body: generateDeparturesQuery(from),
+        body: JSON.stringify(generateDeparturesQuery(from)),
     }).then((foundRes) => {
         if (foundRes.ok) {
             foundRes.json().then((data) => {
