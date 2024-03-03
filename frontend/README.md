@@ -1,70 +1,79 @@
-# Getting Started with Create React App
+# Backend Documentation
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This documentation provides an overview of the Node.js backend code designed to serve as a server for handling requests related to journey planning and departure information. 
 
-## Available Scripts
+## Initialization
 
-In the project directory, you can run:
+The backend code initializes a Node server and listens for incoming requests. It utilizes the Express framework for handling HTTP requests and responses.
 
-### `npm start`
+```javascript
+console.log('Node server started');
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+const path = require('path');
+const http = require('http');
+const express = require('express');
+const cors = require('cors');
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+const IP = process.env.HOST || '0.0.0.0';
+const PORT = process.env.PORT || 80;
 
-### `npm test`
+const app = express();
+const server = http.createServer(app);
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+server.listen(PORT, IP, () => {
+    const serverAddress = server.address();
+    const serverAddressUrl = `http://${serverAddress.address}:${serverAddress.port}`;
+    console.log(`Node server listening to: ${serverAddressUrl}`);
+});
+```
 
-### `npm run build`
+## Request Rate Limiting
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The backend includes request rate limiting functionality to prevent abuse and ensure server stability.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### IP-based Rate Limiting
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Requests from each IP address are tracked, and requests exceeding a certain threshold are rejected with a 429 Too Many Requests status code.
 
-### `npm run eject`
+### Rate Limit Configuration
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- API requests have a maximum rate of 3000 requests per minute.
+- Non-API (content) requests have a maximum rate of 1000 requests per minute.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## API Endpoints
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+The backend exposes the following API endpoints for journey planning and departure information:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. `/api/journeyplanner`: Endpoint for journey planning.
+2. `/api/departures`: Endpoint for fetching departure information.
 
-## Learn More
+## Request Handling
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Journey Planning
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The backend handles POST requests to /api/journeyplanner. The request body should contain parameters for journey planning, including origin, destination, date, etc. It sends a GraphQL query to the Entur Journey Planner API.
 
-### Code Splitting
+### Departures Information
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The backend handles POST requests to /api/departures. Similar to journey planning, the request body should contain the necessary parameters. It sends a GraphQL query to the Entur Departures API.
 
-### Analyzing the Bundle Size
+## Rate Limiting and Error Handling
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+The backend ensures proper rate limiting and error handling to maintain server stability and provide meaningful responses to clients.
 
-### Making a Progressive Web App
+## Static Content
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Additionally, the backend serves static content located in the `/build` directory.
 
-### Advanced Configuration
+### Default Route
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+For any other routes, the backend serves the index.html file to support client-side routing in the React application.
 
-### Deployment
+## Dependencies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+The backend relies on the following dependencies:
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `express`: Web application framework for Node.js.
+- `cors`: Middleware for enabling CORS (Cross-Origin Resource Sharing).
+- `http`: Core module for creating HTTP servers.
+- `path`: Core module for working with file and directory paths.
