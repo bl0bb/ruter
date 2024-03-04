@@ -33,7 +33,7 @@ The backend includes request rate limiting functionality to prevent abuse and en
 
 ### IP-based Rate Limiting
 
-Requests from each IP address are tracked, and requests exceeding a certain threshold are rejected with a 429 Too Many Requests status code.
+Requests from each IP address are tracked, and requests exceeding a certain threshold are rejected with a `429 Too Many Requests` status code.
 
 ### Rate Limit Configuration
 
@@ -51,11 +51,11 @@ The backend exposes the following API endpoints for journey planning and departu
 
 ### Journey Planning
 
-The backend handles POST requests to /api/journeyplanner. The request body should contain parameters for journey planning, including origin, destination, date, etc. It sends a GraphQL query to the Entur Journey Planner API.
+The backend handles POST requests to `/api/journeyplanner`. The request body should contain parameters for journey planning, including origin, destination, date, etc. It sends a GraphQL query to the Entur Journey Planner API.
 
 ### Departures Information
 
-The backend handles POST requests to /api/departures. Similar to journey planning, the request body should contain the necessary parameters. It sends a GraphQL query to the Entur Departures API.
+The backend handles POST requests to `/api/departures`. Similar to journey planning, the request body should contain the necessary parameters. It sends a GraphQL query to the Entur Departures API.
 
 ## Rate Limiting and Error Handling
 
